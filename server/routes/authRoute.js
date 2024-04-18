@@ -5,6 +5,7 @@ const {
   signin,
   logout,
   userProfile,
+  updateUser,
 } = require("../controllers/authController");
 const { isAuthenticated } = require("../middleware/auth");
 
@@ -17,5 +18,7 @@ router.post("/signin", signin);
 router.get("/logout", logout);
 // /api/me
 router.get("/me", isAuthenticated, userProfile);
+// /api/update-user requireSignIn
+router.post("/update-user", isAuthenticated, updateUser);
 
 module.exports = router;

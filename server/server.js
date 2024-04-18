@@ -25,7 +25,7 @@ const errorHandler = require("./middleware/error");
 // Import routes
 const authRoutes = require("./routes/authRoute");
 const postRoute = require("./routes/postRoute");
-
+const restaurantRoute = require("./routes/restaurantRoute");
 connectDB();
 
 //MIDDLEWARE
@@ -70,6 +70,7 @@ app.use(hpp());
 //ROUTES MIDDLEWARE
 app.use("/api", authRoutes);
 app.use("/api", postRoute);
+app.use("/api", restaurantRoute);
 
 __dirname = path.resolve();
 

@@ -28,6 +28,21 @@ const userSchema = new mongoose.Schema(
       minlength: [6, "Password must have at least (6) caracters"],
     },
 
+    image: {
+      url: { type: String, default: null },
+      public_id: { type: String, default: null },
+    },
+
+    address: {
+      type: String,
+      default: null,
+    },
+
+    phone: {
+      type: String,
+      default: null,
+    },
+
     role: {
       type: String,
       default: "user",
