@@ -3,17 +3,41 @@ const router = express.Router();
 const {
   createRestaurant,
   showRestaurant,
+  showSingleRestaurant,
+  deleteRestaurant,
+  updateRestaurant,
+  addComment,
+  addBookmark,
+  removeBookmark,
+  showRecentRestaurant,
+  showBookmarkedRestaurants,
 } = require("../controllers/restaurantController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
-//blog routes
 router.post("/restaurant/create", isAuthenticated, isAdmin, createRestaurant);
 router.get("/restaurant/show", showRestaurant);
-// router.get("/post/:id", showSinglePost);
-// router.delete("/delete/post/:id", isAuthenticated, isAdmin, deletePost);
-// router.put("/update/post/:id", isAuthenticated, isAdmin, updatePost);
-// router.put("/comment/post/:id", isAuthenticated, addComment);
-// router.put("/addlike/post/:id", isAuthenticated, addLike);
-// router.put("/removelike/post/:id", isAuthenticated, removeLike);
+router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
+router.delete(
+  "/restaurant/delete/:idRestaurant",
+  isAuthenticated,
+  isAdmin,
+  deleteRestaurant
+);
+router.put(
+  "/restaurant/update/:id",
+  isAuthenticated,
+  isAdmin,
+  updateRestaurant
+);
+router.put("/restaurant/comment/:id", isAuthenticated, addComment);
+router.put("/restaurant/bookmark/:id", isAuthenticated, addBookmark);
+router.put("/restaurant/unbookmark/:id", isAuthenticated, removeBookmark);
 
+//OTHER
+router.get("/restaurant/recent/show", showRecentRestaurant);
+router.get(
+  "/restaurant/bookmarked/show",
+  isAuthenticated,
+  showBookmarkedRestaurants
+);
 module.exports = router;

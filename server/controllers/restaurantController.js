@@ -2,6 +2,7 @@ const cloudinary = require("../utils/cloudinary");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../server");
 const Restaurant = require("../models/restaurantModel");
+const User = require("../models/userModel");
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
@@ -11,7 +12,6 @@ exports.createRestaurant = async (req, res, next) => {
     country,
     timeWork: { start, end },
     phone,
-    distance,
     description,
     address,
     image,
@@ -29,7 +29,6 @@ exports.createRestaurant = async (req, res, next) => {
       type,
       country,
       phone,
-      distance,
       description,
       address,
       timeWork: {
@@ -66,64 +65,86 @@ exports.showRestaurant = async (req, res, next) => {
 };
 
 //SHOW SINGLE RESTAURANT
-exports.showSinglePost = async (req, res, next) => {
+exports.showSingleRestaurant = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
-      "comments.postedBy",
-      "name"
-    );
+    const restaurant = await Restaurant.findById(req.params.idRestaurant);
     res.status(200).json({
       success: true,
-      post,
+      restaurant,
     });
   } catch (error) {
     next(error);
   }
 };
 
-//DELETE POST
-exports.deletePost = async (req, res, next) => {
-  const currentPost = await Post.findById(req.params.id);
-
-  //DELETE POST IMAGE IN CLOUDINARY
-  const ImgId = currentPost.image.public_id;
-  if (ImgId) {
-    await cloudinary.uploader.destroy(ImgId);
-  }
-
+//DELETE RESTAURANT
+exports.deleteRestaurant = async (req, res, next) => {
   try {
-    const post = await Post.findByIdAndRemove(req.params.id);
+    const restaurant = await Restaurant.findById(req.params.idRestaurant);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
+    }
+
+    const ImgId = restaurant.image.public_id;
+    if (ImgId) {
+      await cloudinary.uploader.destroy(ImgId);
+    }
+
+    await restaurant.deleteOne();
+
     res.status(200).json({
       success: true,
-      message: "post deleted",
+      message: "Restaurant deleted",
     });
   } catch (error) {
     next(error);
   }
 };
 
-//UPDATE POST
-exports.updatePost = async (req, res, next) => {
+//UPDATE RESTAURANT
+exports.updateRestaurant = async (req, res, next) => {
   try {
-    const { title, content, image } = req.body;
-    const currentPost = await Post.findById(req.params.id);
+    const {
+      name,
+      type,
+      country,
+      timeWork: { start, end },
+      phone,
+      distancePrice,
+      description,
+      address,
+      image,
+    } = req.body;
+    const currentRestaurant = await Restaurant.findById(req.params.id);
 
     //BUILD THE OBJECT DATA
     const data = {
-      title: title || currentPost.title,
-      content: content || currentPost.content,
-      image: image || currentPost.image,
+      name: name || currentRestaurant.name,
+      type: type || currentRestaurant.type,
+      country: country || currentRestaurant.country,
+      timeWork: {
+        start: start || currentRestaurant.timeWork.start,
+        end: end || currentRestaurant.timeWork.end,
+      },
+      phone: phone || currentRestaurant.phone,
+      distancePrice: distancePrice || currentRestaurant.distancePrice,
+      description: description || currentRestaurant.description,
+      address: address || currentRestaurant.address,
     };
 
-    //MODIFY POST IMAGE CONDITIONALLY
+    //MODIFY RESTAURANT IMAGE CONDITIONALLY
     if (req.body.image !== "") {
-      const ImgId = currentPost.image.public_id;
+      const ImgId = currentRestaurant.image.public_id;
       if (ImgId) {
         await cloudinary.uploader.destroy(ImgId);
       }
 
       const newImage = await cloudinary.uploader.upload(req.body.image, {
-        folder: "posts",
+        folder: "restaurants",
         width: 1200,
         crop: "scale",
       });
@@ -134,13 +155,17 @@ exports.updatePost = async (req, res, next) => {
       };
     }
 
-    const postUpdate = await Post.findByIdAndUpdate(req.params.id, data, {
-      new: true,
-    });
+    const restaurantUpdate = await Restaurant.findByIdAndUpdate(
+      req.params.id,
+      data,
+      {
+        new: true,
+      }
+    );
 
     res.status(200).json({
       success: true,
-      postUpdate,
+      restaurantUpdate,
     });
   } catch (error) {
     next(error);
@@ -151,45 +176,61 @@ exports.updatePost = async (req, res, next) => {
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
   try {
-    const postComment = await Post.findByIdAndUpdate(
+    const restaurantComment = await Restaurant.findByIdAndUpdate(
       req.params.id,
       {
         $push: { comments: { text: comment, postedBy: req.user._id } },
       },
       { new: true }
     );
-    const post = await Post.findById(postComment._id).populate(
-      "comments.postedBy",
-      "name email"
-    );
+    const restaurant = await Restaurant.findById(
+      restaurantComment._id
+    ).populate("comments.postedBy", "name email");
     res.status(200).json({
       success: true,
-      post,
+      restaurant,
     });
   } catch (error) {
     next(error);
   }
 };
 
-//ADD LIKE
-exports.addLike = async (req, res, next) => {
+//ADD BOOKMARK
+exports.addBookmark = async (req, res, next) => {
   try {
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      {
-        $addToSet: { likes: req.user._id },
-      },
+    const userId = req.user._id;
+    const restaurantId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (user.bookmarks.includes(restaurantId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Restaurant already bookmarked",
+      });
+    }
+
+    await User.findByIdAndUpdate(
+      userId,
+      { $addToSet: { bookmarks: restaurantId } },
       { new: true }
     );
-    const posts = await Post.find()
+
+    const restaurant = await Restaurant.findByIdAndUpdate(
+      restaurantId,
+      { $addToSet: { bookmarks: userId } },
+      { new: true }
+    );
+
+    const restaurants = await Restaurant.find()
       .sort({ createdAt: -1 })
       .populate("postedBy", "name");
-    main.io.emit("add-like", posts);
+    main.io.emit("add-like", restaurants);
 
     res.status(200).json({
       success: true,
-      post,
-      posts,
+      message: "Bookmark added successfully",
+      restaurant,
+      restaurants,
     });
   } catch (error) {
     next(error);
@@ -197,25 +238,70 @@ exports.addLike = async (req, res, next) => {
 };
 
 //REMOVE LIKE
-exports.removeLike = async (req, res, next) => {
+exports.removeBookmark = async (req, res, next) => {
   try {
-    const post = await Post.findByIdAndUpdate(
+    const restaurant = await Restaurant.findByIdAndUpdate(
       req.params.id,
       {
-        $pull: { likes: req.user._id },
+        $pull: { bookmarks: req.user._id },
       },
       { new: true }
     );
 
-    const posts = await Post.find()
+    await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $pull: { bookmarks: req.params.id },
+      },
+      { new: true }
+    );
+
+    const restaurants = await Restaurant.find()
       .sort({ createdAt: -1 })
       .populate("postedBy", "name");
-    main.io.emit("remove-like", posts);
+    main.io.emit("remove-like", restaurants);
 
     res.status(200).json({
       success: true,
-      post,
+      restaurant,
+      restaurants,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//OTHER
+//SHOW 5 RECENT RESTAURANT
+exports.showRecentRestaurant = async (req, res, next) => {
+  try {
+    const restaurants = await Restaurant.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+    res.status(200).json({
+      success: true,
+      restaurants,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.showBookmarkedRestaurants = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId).populate("bookmarks");
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const bookmarkedRestaurants = user.bookmarks;
+
+    res.status(200).json({ success: true, bookmarks: bookmarkedRestaurants });
   } catch (error) {
     next(error);
   }

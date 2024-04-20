@@ -26,6 +26,7 @@ const errorHandler = require("./middleware/error");
 const authRoutes = require("./routes/authRoute");
 const postRoute = require("./routes/postRoute");
 const restaurantRoute = require("./routes/restaurantRoute");
+const menuRoute = require("./routes/menuRoute");
 connectDB();
 
 //MIDDLEWARE
@@ -71,6 +72,7 @@ app.use(hpp());
 app.use("/api", authRoutes);
 app.use("/api", postRoute);
 app.use("/api", restaurantRoute);
+app.use("/api", menuRoute);
 
 __dirname = path.resolve();
 

@@ -47,6 +47,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" }],
   },
   { timestamps: true }
 );

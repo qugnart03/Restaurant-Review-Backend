@@ -12,7 +12,6 @@ const {
 } = require("../controllers/postController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
-//blog routes
 router.post("/post/create", isAuthenticated, isAdmin, createPost);
 router.get("/posts/show", showPost);
 router.get("/post/:id", showSinglePost);

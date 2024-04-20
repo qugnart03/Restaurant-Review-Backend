@@ -1,6 +1,14 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 
+const validTypes = [
+  "Nhà Hàng Pháp",
+  "Nhà Hàng Ý",
+  "Nhà Hàng Trung Hoa",
+  "Nhà Hàng Á",
+  "Nhà Hàng Âu",
+];
+
 const restaurantSchema = mongoose.Schema(
   {
     name: {
@@ -10,6 +18,7 @@ const restaurantSchema = mongoose.Schema(
     type: {
       type: String,
       required: true,
+      //enum: validTypes,
     },
     country: {
       type: String,
@@ -24,10 +33,6 @@ const restaurantSchema = mongoose.Schema(
         type: String,
         required: true,
       },
-    },
-    distance: {
-      type: Number,
-      default: null,
     },
     phone: {
       type: String,
@@ -49,6 +54,17 @@ const restaurantSchema = mongoose.Schema(
       type: ObjectId,
       ref: "User",
     },
+    bookmarks: [{ type: ObjectId, ref: "User" }],
+    comments: [
+      {
+        text: String,
+        created: { type: Date, default: Date.now },
+        postedBy: {
+          type: ObjectId,
+          ref: "User",
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
