@@ -1,5 +1,7 @@
+const userModel = require("../models/userModel");
 const User = require("../models/userModel");
 const ErrorResponse = require("../utils/errorResponse");
+const cloudinary = require("../utils/cloudinary");
 
 //SIGN UP
 exports.signup = async (req, res, next) => {
@@ -77,4 +79,54 @@ exports.userProfile = async (req, res, next) => {
     success: true,
     user,
   });
+};
+
+//UPDATE USER
+/*
+
+*/
+
+exports.updateUser = async (req, res, next) => {
+  try {
+    const { email, name, address, phone, image } = req.body;
+    const user = await userModel.findOne({ email });
+
+    //BUILD THE OBJECT DATA
+    const data = {
+      name: name || user.name,
+      address: address || user.address,
+      phone: phone || user.phone,
+      image: image || user.image,
+    };
+
+    //MODIFY POST IMAGE CONDITIONALLY
+    if (req.body.image !== "") {
+      const ImgId = user.image.public_id;
+      if (ImgId) {
+        await cloudinary.uploader.destroy(ImgId);
+      }
+
+      const newImage = await cloudinary.uploader.upload(req.body.image, {
+        folder: "avatars",
+        width: 1200,
+        crop: "scale",
+      });
+
+      data.image = {
+        public_id: newImage.public_id,
+        url: newImage.secure_url,
+      };
+    }
+
+    const userUpdate = await userModel.findByIdAndUpdate(user, data, {
+      new: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      userUpdate,
+    });
+  } catch (error) {
+    next(error);
+  }
 };

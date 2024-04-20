@@ -5,17 +5,14 @@ const {
   signin,
   logout,
   userProfile,
+  updateUser,
 } = require("../controllers/authController");
 const { isAuthenticated } = require("../middleware/auth");
 
-// AUTH ROUTES
-// /api/signup
 router.post("/signup", signup);
-// /api/signin
 router.post("/signin", signin);
-// /api/logout
 router.get("/logout", logout);
-// /api/me
 router.get("/me", isAuthenticated, userProfile);
+router.post("/user/update", isAuthenticated, updateUser);
 
 module.exports = router;
