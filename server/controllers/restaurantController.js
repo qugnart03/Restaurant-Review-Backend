@@ -6,16 +6,8 @@ const User = require("../models/userModel");
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
-  const {
-    name,
-    type,
-    country,
-    timeWork: { start, end },
-    phone,
-    description,
-    address,
-    image,
-  } = req.body;
+  const { name, type, country, timeWork, phone, description, address, image } =
+    req.body;
 
   try {
     //UPLOAD IMAGE IN CLOUDINARY
@@ -31,10 +23,7 @@ exports.createRestaurant = async (req, res, next) => {
       phone,
       description,
       address,
-      timeWork: {
-        start: req.body.timeWork.start,
-        end: req.body.timeWork.end,
-      },
+      timeWork,
       image: {
         public_id: result.public_id,
         url: result.secure_url,

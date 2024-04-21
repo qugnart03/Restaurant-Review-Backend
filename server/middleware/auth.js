@@ -16,6 +16,7 @@ exports.isAuthenticated = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
     next();
   } catch (error) {
+    console.log(error);
     return next(new ErrorResponse("You must Log In", 401));
   }
 };
