@@ -11,10 +11,13 @@ const {
 } = require("../controllers/menuController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
+const upload = require("../middleware/multer");
+
 router.post(
   "/menu/add/item/:idRestaurant",
   isAuthenticated,
   isAdmin,
+  upload.single("image"),
   addMenuItem
 );
 router.delete(

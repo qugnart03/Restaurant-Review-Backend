@@ -9,10 +9,17 @@ const {
 } = require("../controllers/authController");
 const { isAuthenticated } = require("../middleware/auth");
 
+const upload = require("../middleware/multer");
+
 router.post("/signup", signup);
 router.post("/signin", signin);
 router.get("/logout", logout);
 router.get("/me", isAuthenticated, userProfile);
-router.post("/user/update", isAuthenticated, updateUser);
+router.post(
+  "/user/update",
+  isAuthenticated,
+  upload.single("image"),
+  updateUser
+);
 
 module.exports = router;
