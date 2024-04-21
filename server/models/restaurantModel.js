@@ -13,7 +13,7 @@ const restaurantSchema = mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, "Please fill name of restaurant"],
     },
     type: {
       type: String,

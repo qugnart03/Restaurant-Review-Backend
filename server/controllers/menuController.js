@@ -14,7 +14,7 @@ exports.addMenuItem = async (req, res, next) => {
         items: [],
       });
       await newMenu.save();
-      const result = await cloudinary.uploader.upload(image, {
+      const result = await cloudinary.uploader.upload(req.body.file, {
         folder: "restaurants",
         width: 1200,
         crop: "scale",

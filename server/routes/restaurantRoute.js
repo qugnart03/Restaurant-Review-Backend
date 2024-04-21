@@ -14,7 +14,15 @@ const {
 } = require("../controllers/restaurantController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
-router.post("/restaurant/create", isAuthenticated, isAdmin, createRestaurant);
+const upload = require("../middleware/multer");
+
+router.post(
+  "/restaurant/create",
+  isAuthenticated,
+  isAdmin,
+  upload.single("image"),
+  createRestaurant
+);
 router.get("/restaurant/show", showRestaurant);
 router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
 router.delete(
@@ -27,6 +35,7 @@ router.put(
   "/restaurant/update/:id",
   isAuthenticated,
   isAdmin,
+  upload.single("image"),
   updateRestaurant
 );
 router.put("/restaurant/comment/:id", isAuthenticated, addComment);
@@ -40,4 +49,5 @@ router.get(
   isAuthenticated,
   showBookmarkedRestaurants
 );
+
 module.exports = router;

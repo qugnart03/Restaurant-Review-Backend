@@ -10,8 +10,12 @@ exports.createRestaurant = async (req, res, next) => {
     req.body;
 
   try {
+    // Check if timeWork object exists in req.body
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
+
     //UPLOAD IMAGE IN CLOUDINARY
-    const result = await cloudinary.uploader.upload(image, {
+    const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "restaurants",
       width: 1200,
       crop: "scale",
@@ -23,7 +27,7 @@ exports.createRestaurant = async (req, res, next) => {
       phone,
       description,
       address,
-      timeWork,
+      timeWork: { start: startTime, end: endTime },
       image: {
         public_id: result.public_id,
         url: result.secure_url,
@@ -101,14 +105,18 @@ exports.updateRestaurant = async (req, res, next) => {
       name,
       type,
       country,
-      timeWork: { start, end },
+      timeWork,
       phone,
       distancePrice,
       description,
       address,
       image,
     } = req.body;
+
     const currentRestaurant = await Restaurant.findById(req.params.id);
+
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
 
     //BUILD THE OBJECT DATA
     const data = {
@@ -116,8 +124,8 @@ exports.updateRestaurant = async (req, res, next) => {
       type: type || currentRestaurant.type,
       country: country || currentRestaurant.country,
       timeWork: {
-        start: start || currentRestaurant.timeWork.start,
-        end: end || currentRestaurant.timeWork.end,
+        start: startTime || currentRestaurant.timeWork.start,
+        end: endTime || currentRestaurant.timeWork.end,
       },
       phone: phone || currentRestaurant.phone,
       distancePrice: distancePrice || currentRestaurant.distancePrice,
@@ -126,13 +134,13 @@ exports.updateRestaurant = async (req, res, next) => {
     };
 
     //MODIFY RESTAURANT IMAGE CONDITIONALLY
-    if (req.body.image !== "") {
+    if (image !== "") {
       const ImgId = currentRestaurant.image.public_id;
       if (ImgId) {
         await cloudinary.uploader.destroy(ImgId);
       }
 
-      const newImage = await cloudinary.uploader.upload(req.body.image, {
+      const newImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "restaurants",
         width: 1200,
         crop: "scale",
