@@ -6,11 +6,24 @@ const User = require("../models/userModel");
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
-  const { name, type, country, timeWork, phone, description, address, image } =
-    req.body;
-
   try {
-    // Check if timeWork object exists in req.body
+    const existingRestaurant = await Restaurant.findOne({
+      postedBy: req.user._id,
+    });
+
+    if (existingRestaurant) {
+      return res.status(400).json({
+        success: false,
+        error: "User has already created a restaurant",
+      });
+    }
+
+    const { name, type, country, timeWork, phone, description, address } =
+      req.body;
+
+    // const startTime = timeWork.split("-")[0];
+    // const endTime = timeWork.split("-")[1];
+
     const startTime = timeWork ? timeWork.start : undefined;
     const endTime = timeWork ? timeWork.end : undefined;
 
