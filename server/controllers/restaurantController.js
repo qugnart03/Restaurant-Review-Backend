@@ -21,11 +21,8 @@ exports.createRestaurant = async (req, res, next) => {
     const { name, type, country, timeWork, phone, description, address } =
       req.body;
 
-    // const startTime = timeWork.split("-")[0];
-    // const endTime = timeWork.split("-")[1];
-
-    const startTime = timeWork ? timeWork.start : undefined;
-    const endTime = timeWork ? timeWork.end : undefined;
+    const startTime = timeWork ? timeWork.split("-")[0] : undefined;
+    const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
     //UPLOAD IMAGE IN CLOUDINARY
     const result = await cloudinary.uploader.upload(req.file.path, {
@@ -126,12 +123,13 @@ exports.updateRestaurant = async (req, res, next) => {
       image,
     } = req.body;
 
-    const currentRestaurant = await Restaurant.findById(req.params.id);
+    const currentRestaurant = await Restaurant.findOne({
+      postedBy: req.user._id,
+    });
 
-    const startTime = timeWork ? timeWork.start : undefined;
-    const endTime = timeWork ? timeWork.end : undefined;
+    const startTime = timeWork ? timeWork.split("-")[0] : undefined;
+    const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
-    //BUILD THE OBJECT DATA
     const data = {
       name: name || currentRestaurant.name,
       type: type || currentRestaurant.type,
@@ -146,7 +144,6 @@ exports.updateRestaurant = async (req, res, next) => {
       address: address || currentRestaurant.address,
     };
 
-    //MODIFY RESTAURANT IMAGE CONDITIONALLY
     if (image !== "") {
       const ImgId = currentRestaurant.image.public_id;
       if (ImgId) {
