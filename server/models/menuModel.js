@@ -15,10 +15,6 @@ const menuItemSchema = new Schema({
     type: Number,
     required: true,
   },
-  descriptionDish: {
-    type: String,
-    default: null,
-  },
   image: {
     url: String,
     public_id: String,

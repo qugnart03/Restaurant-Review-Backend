@@ -3,7 +3,7 @@ const router = express.Router();
 const {
   createRestaurant,
   showRestaurant,
-  showSingleRestaurant,
+  // showSingleRestaurant,
   deleteRestaurant,
   updateRestaurant,
   addComment,
@@ -11,6 +11,7 @@ const {
   removeBookmark,
   showRecentRestaurant,
   showBookmarkedRestaurants,
+  showRestaurantWithAdmin,
 } = require("../controllers/restaurantController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
@@ -23,9 +24,15 @@ router.post(
   upload.single("image"),
   createRestaurant
 );
-router.get("/restaurant/show", showRestaurant);
-router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
 
+router.get("/restaurant/show", showRestaurant);
+// router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
+router.get(
+  "/admin/restaurant/show",
+  isAuthenticated,
+  isAdmin,
+  showRestaurantWithAdmin
+);
 router.delete(
   "/restaurant/delete/:idRestaurant",
   isAuthenticated,

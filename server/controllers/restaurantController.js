@@ -6,14 +6,26 @@ const User = require("../models/userModel");
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
-  console.log(req?.body);
-  console.log(req?.file);
-  const { name, type, country, timeWork, phone, description, address } =
-    req.body;
   try {
-    // Check if timeWork object exists in req.body
-    const startTime = timeWork.split("-")[0];
-    const endTime = timeWork.split("-")[1];
+    const existingRestaurant = await Restaurant.findOne({
+      postedBy: req.user._id,
+    });
+
+    if (existingRestaurant) {
+      return res.status(400).json({
+        success: false,
+        error: "User has already created a restaurant",
+      });
+    }
+
+    const { name, type, country, timeWork, phone, description, address } =
+      req.body;
+
+    // const startTime = timeWork.split("-")[0];
+    // const endTime = timeWork.split("-")[1];
+
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
 
     //UPLOAD IMAGE IN CLOUDINARY
     const result = await cloudinary.uploader.upload(req.file.path, {
@@ -300,6 +312,26 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
     const bookmarkedRestaurants = user.bookmarks;
 
     res.status(200).json({ success: true, bookmarks: bookmarkedRestaurants });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.showRestaurantWithAdmin = async (req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findOne({ postBy: req.params.idUser });
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found for this user",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      restaurant,
+    });
   } catch (error) {
     next(error);
   }
