@@ -117,7 +117,6 @@ exports.updateRestaurant = async (req, res, next) => {
       country,
       timeWork,
       phone,
-      distancePrice,
       description,
       address,
       image,
@@ -139,7 +138,6 @@ exports.updateRestaurant = async (req, res, next) => {
         end: endTime || currentRestaurant.timeWork.end,
       },
       phone: phone || currentRestaurant.phone,
-      distancePrice: distancePrice || currentRestaurant.distancePrice,
       description: description || currentRestaurant.description,
       address: address || currentRestaurant.address,
     };
