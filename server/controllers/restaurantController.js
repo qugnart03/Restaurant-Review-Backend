@@ -6,13 +6,14 @@ const User = require("../models/userModel");
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
-  const { name, type, country, timeWork, phone, description, address, image } =
+  console.log(req?.body);
+  console.log(req?.file);
+  const { name, type, country, timeWork, phone, description, address } =
     req.body;
-
   try {
     // Check if timeWork object exists in req.body
-    const startTime = timeWork ? timeWork.start : undefined;
-    const endTime = timeWork ? timeWork.end : undefined;
+    const startTime = timeWork.split("-")[0];
+    const endTime = timeWork.split("-")[1];
 
     //UPLOAD IMAGE IN CLOUDINARY
     const result = await cloudinary.uploader.upload(req.file.path, {

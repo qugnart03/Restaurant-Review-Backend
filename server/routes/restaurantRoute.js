@@ -25,6 +25,7 @@ router.post(
 );
 router.get("/restaurant/show", showRestaurant);
 router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
+
 router.delete(
   "/restaurant/delete/:idRestaurant",
   isAuthenticated,
