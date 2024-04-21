@@ -111,6 +111,8 @@ exports.deleteRestaurant = async (req, res, next) => {
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    console.log("Updating restaurant...");
+
     const {
       name,
       type,
@@ -122,12 +124,19 @@ exports.updateRestaurant = async (req, res, next) => {
       image,
     } = req.body;
 
+    console.log("Request body:", req.body);
+
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
 
-    const startTime = timeWork ? timeWork.split("-")[0] : undefined;
-    const endTime = timeWork ? timeWork.split("-")[1] : undefined;
+    console.log("Current restaurant:", currentRestaurant);
+
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
+
+    console.log("Start time:", startTime);
+    console.log("End time:", endTime);
 
     const data = {
       name: name || currentRestaurant.name,
@@ -141,6 +150,8 @@ exports.updateRestaurant = async (req, res, next) => {
       description: description || currentRestaurant.description,
       address: address || currentRestaurant.address,
     };
+
+    console.log("Update data:", data);
 
     if (image !== "") {
       const ImgId = currentRestaurant.image.public_id;
@@ -160,19 +171,22 @@ exports.updateRestaurant = async (req, res, next) => {
       };
     }
 
+    console.log("Final data for update:", data);
+
     const restaurantUpdate = await Restaurant.findByIdAndUpdate(
-      req.params.id,
+      currentRestaurant._id,
       data,
-      {
-        new: true,
-      }
+      { new: true }
     );
+
+    console.log("Updated restaurant:", restaurantUpdate);
 
     res.status(200).json({
       success: true,
       restaurantUpdate,
     });
   } catch (error) {
+    console.error("Error updating restaurant:", error);
     next(error);
   }
 };
@@ -313,8 +327,9 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 };
 
 exports.showRestaurantWithAdmin = async (req, res, next) => {
+  console.log(req.user._id);
   try {
-    const restaurant = await Restaurant.findOne({ postBy: req.params.idUser });
+    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
     if (!restaurant) {
       return res.status(404).json({
