@@ -44,7 +44,6 @@ exports.signin = async (req, res, next) => {
       return next(new ErrorResponse("Invalid credentials", 400));
     }
 
-    // Send the token response
     sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
@@ -52,34 +51,16 @@ exports.signin = async (req, res, next) => {
 };
 
 const sendTokenResponse = async (user, codeStatus, res) => {
-  try {
-    const token = await user.getJwtToken();
-    const options = { maxAge: 60 * 60 * 1000, httpOnly: true };
-    if (process.env.NODE_ENV === "production") {
-      options.secure = true;
-    }
-
-    // Check if there's an existing token in the request cookies
-    const existingToken = req.cookies.token;
-
-    // If there's an existing token, override it
-    if (existingToken) {
-      res.cookie("token", token, options).status(codeStatus).json({
-        success: true,
-        id: user._id,
-        role: user.role,
-      });
-    } else {
-      // Otherwise, set a new token
-      res.status(codeStatus).cookie("token", token, options).json({
-        success: true,
-        id: user._id,
-        role: user.role,
-      });
-    }
-  } catch (error) {
-    next(error);
+  const token = await user.getJwtToken();
+  const options = { maxAge: 60 * 60 * 1000, httpOnly: true };
+  if (process.env.NODE_ENV === "production") {
+    options.secure = true;
   }
+  res.status(codeStatus).cookie("token", token, options).json({
+    success: true,
+    id: user._id,
+    role: user.role,
+  });
 };
 
 //LOG OUT
