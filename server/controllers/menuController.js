@@ -270,13 +270,18 @@ exports.getType = async (req, res, next) => {
 // GET DISH BY TYPE
 exports.getAllDishesByType = async (req, res, next) => {
   try {
-    const type = req.params.type;
+    let type = req.params.type;
 
-    const dishes = await Menu.find({ "items.typeDish": type });
+    let dishes;
+    if (type === "all") {
+      dishes = await Menu.find();
+    } else {
+      dishes = await Menu.find({ "items.typeDish": type });
+    }
 
     const listDishes = dishes.reduce((array, dish) => {
       dish.items.forEach((item) => {
-        if (item.typeDish === type) {
+        if (type === "all" || item.typeDish === type) {
           if (!array[item.typeDish]) {
             array[item.typeDish] = [];
           }
