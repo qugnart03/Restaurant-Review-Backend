@@ -386,9 +386,11 @@ exports.getAllDishOfRestaurant = async (req, res, next) => {
 
     let dataDishes = dishes;
     if (type && type !== "all") {
-      dataDishes = dishes
-        .map((dish) => dish.items.filter((item) => item.typeDish === type))
-        .flat();
+      dataDishes = dishes.flatMap((dish) =>
+        dish.items.filter((item) => item.typeDish === type)
+      );
+    } else {
+      dataDishes = dishes.flatMap((dish) => dish.items);
     }
 
     res.status(200).json({
