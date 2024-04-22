@@ -73,9 +73,9 @@ exports.showAllMenuItem = async (req, res, next) => {
   }
 };
 
+// SHOW MENU
 exports.showMenuItem = async (req, res, next) => {
   try {
-    // Find the restaurant belonging to the currently authenticated user
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
     if (!restaurant) {
@@ -107,43 +107,15 @@ exports.showMenuItem = async (req, res, next) => {
   }
 };
 
-// SHOW ONLY MENU
-exports.showRestaurantMenu = async (req, res, next) => {
+// SHOW DISH BY ID
+exports.showDishByID = async (req, res, next) => {
   try {
-    const restaurantMenu = await Menu.findOne({
-      restaurant: req.params.idRestaurant,
-    }).populate({
-      path: "items",
-      select: "typeDish nameDish priceDish image",
-    });
+    const { idDish } = req.params;
 
-    if (!restaurantMenu) {
-      return res.status(404).json({
-        success: false,
-        message: "Menu not found for this restaurant",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      menu: restaurantMenu.items,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.showDishMenu = async (req, res, next) => {
-  try {
-    const { idDish } = req.params; // Get the dish ID from the request parameters
-
-    // Find the restaurant by the user's ID
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
-    // Find the menu by the restaurant's ID
     const menu = await Menu.findOne({ restaurant: restaurant._id });
 
-    // Check if the menu exists
     if (!menu) {
       return res.status(404).json({
         success: false,
@@ -151,10 +123,8 @@ exports.showDishMenu = async (req, res, next) => {
       });
     }
 
-    // Find the menu item by its ID
     const menuItem = menu.items.find((item) => item._id.toString() === idDish);
 
-    // Check if the menu item exists
     if (!menuItem) {
       return res
         .status(404)
@@ -173,15 +143,12 @@ exports.showDishMenu = async (req, res, next) => {
 // DELETE DISH MENU
 exports.deleteDishMenu = async (req, res, next) => {
   try {
-    const { idDish } = req.params; // Get the dish ID from the request parameters
+    const { idDish } = req.params;
 
-    // Find the restaurant by the user's ID
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
-    // Find the menu by the restaurant's ID
     const menu = await Menu.findOne({ restaurant: restaurant._id });
 
-    // Check if the menu exists
     if (!menu) {
       return res.status(404).json({
         success: false,
@@ -189,20 +156,16 @@ exports.deleteDishMenu = async (req, res, next) => {
       });
     }
 
-    // Find the menu item by its ID
     const menuItem = menu.items.find((item) => item._id.toString() === idDish);
 
-    // Check if the menu item exists
     if (!menuItem) {
       return res
         .status(404)
         .json({ success: false, message: "Menu item not found" });
     }
 
-    // Remove the item from the items array
     menu.items = menu.items.filter((item) => item._id.toString() !== idDish);
 
-    // Save the updated menu
     await menu.save();
 
     res.status(200).json({ success: true, message: "Menu item deleted" });
@@ -234,38 +197,6 @@ exports.getType = async (req, res, next) => {
     next(error);
   }
 };
-
-//GET DISH BY ID
-// exports.getDishById = async (req, res, next) => {
-//   try {
-//     const menu = await Menu.findOne({ "items._id": req.params.id }).populate(
-//       "restaurant"
-//     );
-
-//     if (!menu) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Menu not found" });
-//     }
-
-//     const dish = menu.items.find(
-//       (item) => item._id.toString() === req.params.id
-//     );
-
-//     if (!dish) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Dish not found" });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       dish,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 // GET DISH BY TYPE
 exports.getAllDishesByType = async (req, res, next) => {
@@ -396,6 +327,74 @@ exports.getAllDishOfRestaurant = async (req, res, next) => {
     res.status(200).json({
       success: true,
       dishes: dataDishes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.searchDishByName = async (req, res, next) => {
+  try {
+    const searchTerm = req.params.name.toLowerCase();
+
+    if (!searchTerm) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a search term",
+      });
+    }
+
+    let foundItems;
+
+    if (req.user.role === "user") {
+      foundItems = await Menu.aggregate([
+        {
+          $unwind: "$items", // Giải nén mảng
+        },
+        {
+          $match: {
+            "items.nameDish": { $regex: new RegExp(searchTerm, "i") },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              _id: "$_id",
+              restaurant: "$restaurant",
+            },
+            items: { $push: "$items" }, // Tạo một mảng các items
+          },
+        },
+        {
+          $project: {
+            _id: "$_id._id", // Sử dụng _id của Menu làm _id cho mục kết quả
+            restaurant: "$_id.restaurant", // Lấy restaurant từ _id
+            items: 1, // Giữ nguyên mảng items
+          },
+        },
+      ]);
+    } else {
+      const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+
+      const menu = await Menu.findOne({ restaurant: restaurant._id });
+
+      const menuItems = menu.items;
+
+      foundItems = menuItems.filter((item) => {
+        return item.nameDish.toLowerCase().includes(searchTerm);
+      });
+    }
+
+    if (foundItems.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No dishes found with the provided search term",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      dishes: foundItems,
     });
   } catch (error) {
     next(error);
