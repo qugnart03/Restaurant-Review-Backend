@@ -73,6 +73,40 @@ exports.showAllMenuItem = async (req, res, next) => {
   }
 };
 
+exports.showMenuItem = async (req, res, next) => {
+  try {
+    // Find the restaurant belonging to the currently authenticated user
+    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found for this user",
+      });
+    }
+
+    // Fetch menu items for the found restaurant and populate the "restaurant" field with just the "name"
+    const menuItems = await Menu.find({ restaurant: restaurant._id }).populate(
+      "restaurant",
+      "name"
+    );
+
+    if (!menuItems || menuItems.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No menu items found for this restaurant",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      menuItems,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // SHOW ONLY MENU
 exports.showRestaurantMenu = async (req, res, next) => {
   try {

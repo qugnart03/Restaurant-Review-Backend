@@ -125,7 +125,6 @@ exports.updateRestaurant = async (req, res, next) => {
     } = req.body;
 
     console.log("Request body:", req.body);
-    console.log("Request file:", req.file);
 
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
@@ -133,8 +132,11 @@ exports.updateRestaurant = async (req, res, next) => {
 
     console.log("Current restaurant:", currentRestaurant);
 
-    const startTime = timeWork ? timeWork.split("-")[0] : undefined;
-    const endTime = timeWork ? timeWork.split("-")[1] : undefined;
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
+
+    console.log("Start time:", startTime);
+    console.log("End time:", endTime);
 
     const data = {
       name: name || currentRestaurant.name,
@@ -324,6 +326,7 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 };
 
 exports.showRestaurantWithAdmin = async (req, res, next) => {
+  console.log(req.user._id);
   try {
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 

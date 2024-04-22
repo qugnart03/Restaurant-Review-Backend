@@ -106,7 +106,7 @@ exports.updateUser = async (req, res, next) => {
         await cloudinary.uploader.destroy(ImgId);
       }
 
-      const newImage = await cloudinary.uploader.upload(req.file.path, {
+      const newImage = await cloudinary.uploader.upload(req.data.path, {
         folder: "avatars",
         width: 1200,
         crop: "scale",
