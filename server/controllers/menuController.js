@@ -273,33 +273,43 @@ exports.getAllDishesByType = async (req, res, next) => {
     let type = req.params.type;
 
     let dishes;
-    if (type === "all") {
-      dishes = await Menu.find();
+
+    if (req.user.role === "user") {
+      console.log("USER");
+      if (type === "all") {
+        dishes = await Menu.find();
+      } else {
+        dishes = await Menu.find({ "items.typeDish": type });
+        console.log("xzxz");
+      }
     } else {
-      dishes = await Menu.find({ "items.typeDish": type });
+      const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+      if (!restaurant) {
+        return res
+          .status(404)
+          .json({ success: false, error: "Restaurant not found" });
+      }
+
+      console.log("Admin ROLE");
+      dishes = await Menu.find({ restaurant: restaurant._id });
     }
 
-    const listDishes = dishes.reduce((array, dish) => {
-      dish.items.forEach((item) => {
-        if (type === "all" || item.typeDish === type) {
-          if (!array[item.typeDish]) {
-            array[item.typeDish] = [];
-          }
-          array[item.typeDish].push(item);
-        }
-      });
-      return array;
-    }, {});
+    if (!(type === "all")) {
+      console.log("zcxxzcz");
+      dishes = dishes
+        .map((dish) => ({
+          _id: dish._id,
+          restaurant: dish.restaurant,
+          items: dish.items.filter((item) => item.typeDish === type),
+        }))
+        .filter((dish) => dish.items.length > 0);
+    }
 
-    const dishesByType = Object.entries(listDishes).map(
-      ([typeDish, items]) => ({
-        items,
-      })
-    );
+    const allItems = dishes.map((dish) => dish.items).flat();
 
     res.status(200).json({
       success: true,
-      dishes: dishesByType,
+      dishes: allItems,
     });
   } catch (error) {
     next(error);
