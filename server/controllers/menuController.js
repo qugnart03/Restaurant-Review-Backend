@@ -305,11 +305,17 @@ exports.getAllDishesByType = async (req, res, next) => {
         .filter((dish) => dish.items.length > 0);
     }
 
-    const allItems = dishes.map((dish) => dish.items).flat();
+    let dataDishes;
+    if (!(req.user.role === "user")) {
+      const allItems = dishes.map((dish) => dish.items).flat();
+      dataDishes = allItems;
+    } else {
+      dataDishes = dishes;
+    }
 
     res.status(200).json({
       success: true,
-      dishes: allItems,
+      dishes: dataDishes,
     });
   } catch (error) {
     next(error);
