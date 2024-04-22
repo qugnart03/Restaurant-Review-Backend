@@ -40,7 +40,7 @@ router.delete(
   deleteRestaurant
 );
 router.put(
-  "/restaurant/update/:id",
+  "/restaurant/update",
   isAuthenticated,
   isAdmin,
   upload.single("image"),

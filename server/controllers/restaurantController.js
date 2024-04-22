@@ -111,21 +111,27 @@ exports.deleteRestaurant = async (req, res, next) => {
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    console.log("Updating restaurant...");
+
     const {
       name,
       type,
       country,
       timeWork,
       phone,
-      distancePrice,
       description,
       address,
       image,
     } = req.body;
 
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
+
+    console.log("Current restaurant:", currentRestaurant);
 
     const startTime = timeWork ? timeWork.split("-")[0] : undefined;
     const endTime = timeWork ? timeWork.split("-")[1] : undefined;
@@ -139,10 +145,11 @@ exports.updateRestaurant = async (req, res, next) => {
         end: endTime || currentRestaurant.timeWork.end,
       },
       phone: phone || currentRestaurant.phone,
-      distancePrice: distancePrice || currentRestaurant.distancePrice,
       description: description || currentRestaurant.description,
       address: address || currentRestaurant.address,
     };
+
+    console.log("Update data:", data);
 
     if (image !== "") {
       const ImgId = currentRestaurant.image.public_id;
@@ -162,23 +169,25 @@ exports.updateRestaurant = async (req, res, next) => {
       };
     }
 
+    console.log("Final data for update:", data);
+
     const restaurantUpdate = await Restaurant.findByIdAndUpdate(
-      req.params.id,
+      currentRestaurant._id,
       data,
-      {
-        new: true,
-      }
+      { new: true }
     );
+
+    console.log("Updated restaurant:", restaurantUpdate);
 
     res.status(200).json({
       success: true,
       restaurantUpdate,
     });
   } catch (error) {
+    console.error("Error updating restaurant:", error);
     next(error);
   }
 };
-
 //ADD COMMENT
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
@@ -316,7 +325,7 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 
 exports.showRestaurantWithAdmin = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findOne({ postBy: req.params.idUser });
+    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
     if (!restaurant) {
       return res.status(404).json({
