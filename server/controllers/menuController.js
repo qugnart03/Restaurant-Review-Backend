@@ -390,7 +390,9 @@ exports.getAllDishOfRestaurant = async (req, res, next) => {
         dish.items.some((item) => item.typeDish === type)
       );
     }
-    // 6624e0971bb4fe27f0af39ff //soup
+
+    dataDishes = dataDishes.map((dish) => dish.items).flat();
+
     res.status(200).json({
       success: true,
       dishes: dataDishes,
