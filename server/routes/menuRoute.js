@@ -11,6 +11,7 @@ const {
   updateDishMenu,
   showDishMenu,
   showMenuItem,
+  getAllDishOfRestaurant,
 } = require("../controllers/menuController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 
@@ -34,6 +35,11 @@ router.get("/menu/show/dish", isAuthenticated, isAdmin, showMenuItem);
 // router.get("/menu/show/:idRestaurant", isAuthenticated, showRestaurantMenu);
 router.get("/typeDish", isAuthenticated, isAdmin, getType);
 router.get("/dishes/:type", isAuthenticated, getAllDishesByType);
+router.get(
+  "/menu/restaurant/:idRestaurant/dishes/:type",
+  isAuthenticated,
+  getAllDishOfRestaurant
+);
 // router.get("/dish/:id", isAuthenticated, isAdmin, getDishById);
 
 router.get("/dish/:idDish", isAuthenticated, showDishMenu);

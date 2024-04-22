@@ -376,3 +376,26 @@ exports.updateDishMenu = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getAllDishOfRestaurant = async (req, res, next) => {
+  try {
+    let type = req.params.type;
+    let idRestaurant = req.params.idRestaurant;
+
+    const dishes = await Menu.find({ restaurant: idRestaurant });
+
+    let dataDishes = dishes;
+    if (type && type !== "all") {
+      dataDishes = dishes.filter((dish) =>
+        dish.items.some((item) => item.typeDish === type)
+      );
+    }
+    // 6624e0971bb4fe27f0af39ff //soup
+    res.status(200).json({
+      success: true,
+      dishes: dataDishes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
