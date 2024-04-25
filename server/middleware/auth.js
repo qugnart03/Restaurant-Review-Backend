@@ -23,8 +23,30 @@ exports.isAuthenticated = async (req, res, next) => {
 
 // MIDDLEWARE FOR ADMIN
 exports.isAdmin = (req, res, next) => {
-  if (req.user.role === "user") {
+  if (req.user.role !== "Admin") {
     return next(new ErrorResponse("Access denied, you must an admin", 401));
   }
   next();
+};
+
+// MIDDLEWARE FOR OWNRESTAURANT
+exports.isOwnRestaurant = (req, res, next) => {
+  if (req.user.role !== "OwnRestaurant") {
+    return next(
+      new ErrorResponse("Access denied, you must own a restaurant", 401)
+    );
+  }
+  next();
+};
+
+// Middleware cho quyền
+exports.isRole = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorResponse(`Access denied, your role must be ${roles}`, 401)
+      );
+    }
+    next();
+  };
 };
