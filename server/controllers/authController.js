@@ -171,3 +171,104 @@ exports.loginWithToken = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateRestaurantById = async (req, res, next) => {
+  try {
+    console.log("Updating restaurant...");
+
+    const {
+      name,
+      type,
+      country,
+      timeWork,
+      phone,
+      description,
+      address,
+      image,
+    } = req.body;
+
+    console.log("Request body:", req.body);
+
+    // Kiểm tra xem idRestaurant có được truyền từ request không
+    const idRestaurant = req.params.idRestaurant;
+    if (!idRestaurant) {
+      return res
+        .status(400)
+        .json({ success: false, message: "idRestaurant is required." });
+    }
+
+    // Tìm nhà hàng dựa trên idRestaurant và xác thực xem người dùng có quyền chỉnh sửa hay không
+    const currentRestaurant = await Restaurant.findOne({
+      _id: idRestaurant,
+    });
+
+    // Nếu không tìm thấy nhà hàng hoặc người dùng không có quyền chỉnh sửa, trả về lỗi 404
+    if (!currentRestaurant) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Restaurant not found or you do not have permission to update.",
+      });
+    }
+
+    console.log("Current restaurant:", currentRestaurant);
+
+    const startTime = timeWork ? timeWork.start : undefined;
+    const endTime = timeWork ? timeWork.end : undefined;
+
+    console.log("Start time:", startTime);
+    console.log("End time:", endTime);
+
+    const data = {
+      name: name || currentRestaurant.name,
+      type: type || currentRestaurant.type,
+      country: country || currentRestaurant.country,
+      timeWork: {
+        start: startTime || currentRestaurant.timeWork.start,
+        end: endTime || currentRestaurant.timeWork.end,
+      },
+      phone: phone || currentRestaurant.phone,
+      description: description || currentRestaurant.description,
+      address: address || currentRestaurant.address,
+    };
+
+    console.log("Update data:", data);
+
+    if (image !== "") {
+      const ImgId = currentRestaurant.image.public_id;
+      if (ImgId) {
+        await cloudinary.uploader.destroy(ImgId);
+      }
+
+      const newImage = await cloudinary.uploader.upload(req.file.path, {
+        folder: "restaurants",
+        width: 1200,
+        crop: "scale",
+      });
+
+      data.image = {
+        public_id: newImage.public_id,
+        url: newImage.secure_url,
+      };
+    }
+
+    console.log("Final data for update:", data);
+
+    // Cập nhật thông tin của nhà hàng
+    const restaurantUpdate = await Restaurant.findByIdAndUpdate(
+      idRestaurant,
+      data,
+      { new: true }
+    );
+
+    console.log("Updated restaurant:", restaurantUpdate);
+
+    res.status(200).json({
+      success: true,
+      restaurantUpdate,
+    });
+  } catch (error) {
+    console.error("Error updating restaurant:", error);
+    next(error);
+  }
+};

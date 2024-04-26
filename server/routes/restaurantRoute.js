@@ -35,8 +35,8 @@ router.get(
 );
 router.delete(
   "/restaurant/delete/:idRestaurant",
-  isAuthenticated,
-  isAdmin,
+  // isAuthenticated,
+  // isAdmin,
   deleteRestaurant
 );
 router.put(

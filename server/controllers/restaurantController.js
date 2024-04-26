@@ -110,6 +110,9 @@ exports.deleteRestaurant = async (req, res, next) => {
 
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
+  const AccessToken =
+    "pk.eyJ1IjoibWFpaHV5bWFwMTIzIiwiYSI6ImNsdmR0ZTloazAybDcyaXBweGp0ZmQ0eDYifQ.Umosc-ZzdKZOI6CKCCs8rA";
+
   try {
     console.log("Updating restaurant...");
 
@@ -124,19 +127,23 @@ exports.updateRestaurant = async (req, res, next) => {
       image,
     } = req.body;
 
-    console.log("Request body:", req.body);
+    console.log(address);
+
+    const coordinates = await getCoordinatesFromAddress(address, AccessToken);
+    console.log(coordinates);
+    // console.log("Request body:", req.body);
 
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
 
-    console.log("Current restaurant:", currentRestaurant);
+    // console.log("Current restaurant:", currentRestaurant);
 
     const startTime = timeWork ? timeWork.start : undefined;
     const endTime = timeWork ? timeWork.end : undefined;
 
-    console.log("Start time:", startTime);
-    console.log("End time:", endTime);
+    // console.log("Start time:", startTime);
+    // console.log("End time:", endTime);
 
     const data = {
       name: name || currentRestaurant.name,
@@ -149,9 +156,10 @@ exports.updateRestaurant = async (req, res, next) => {
       phone: phone || currentRestaurant.phone,
       description: description || currentRestaurant.description,
       address: address || currentRestaurant.address,
+      coordinates: coordinates || currentRestaurant.coordinates,
     };
 
-    console.log("Update data:", data);
+    // console.log("Update data:", data);
 
     if (image !== "") {
       const ImgId = currentRestaurant.image.public_id;
@@ -344,5 +352,30 @@ exports.showRestaurantWithAdmin = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+const getCoordinatesFromAddress = async (address, AccessToken) => {
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+        address
+      )}.json?access_token=${AccessToken}`
+    );
+    const data = await response.json();
+
+    // Extract coordinates from the first result
+    if (data.features.length > 0) {
+      const coordinates = data.features[0].center;
+      return {
+        latitude: coordinates[1],
+        longitude: coordinates[0],
+      };
+    } else {
+      throw new Error("No coordinates found for the address.");
+    }
+  } catch (error) {
+    console.error("Error fetching coordinates:", error.message);
+    return null;
   }
 };

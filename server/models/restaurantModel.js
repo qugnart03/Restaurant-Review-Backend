@@ -20,10 +20,6 @@ const restaurantSchema = mongoose.Schema(
       required: true,
       //enum: validTypes,
     },
-    country: {
-      type: String,
-      required: true,
-    },
     timeWork: {
       start: {
         type: String,
@@ -65,6 +61,17 @@ const restaurantSchema = mongoose.Schema(
         },
       },
     ],
+
+    coordinates: {
+      latitude: {
+        type: Number,
+        default: null,
+      },
+      longitude: {
+        type: Number,
+        default: null,
+      },
+    },
 
     status: {
       type: Boolean,
