@@ -20,7 +20,6 @@ const upload = require("../middleware/multer");
 router.post(
   "/restaurant/create",
   isAuthenticated,
-  isAdmin,
   upload.single("image"),
   createRestaurant
 );

@@ -5,9 +5,11 @@ const {
   signin,
   logout,
   userProfile,
-  updateUser,
   loginWithToken,
-} = require("../controllers/authController");
+  updateUser,
+  sendEmail,
+  verifiedEmail,
+} = require("../controllers/userController");
 const { isAuthenticated } = require("../middleware/auth");
 
 const upload = require("../middleware/multer");
@@ -32,8 +34,11 @@ router.post(
   updateUser
 );
 
-// const id = "6628ca827182c7204ce5c094";
 // Đăng nhập bằng token
 router.post("/login-with-token", loginWithToken);
+
+router.get("/verify/:id", verifiedEmail);
+
+router.get("/sendVerification", isAuthenticated, sendEmail);
 
 module.exports = router;

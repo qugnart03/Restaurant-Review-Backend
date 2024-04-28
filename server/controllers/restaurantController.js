@@ -107,15 +107,12 @@ exports.deleteRestaurant = async (req, res, next) => {
     next(error);
   }
 };
+const AccessToken =
+  "pk.eyJ1IjoibWFpaHV5bWFwMTIzIiwiYSI6ImNsdmR0ZTloazAybDcyaXBweGp0ZmQ0eDYifQ.Umosc-ZzdKZOI6CKCCs8rA";
 
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
-  const AccessToken =
-    "pk.eyJ1IjoibWFpaHV5bWFwMTIzIiwiYSI6ImNsdmR0ZTloazAybDcyaXBweGp0ZmQ0eDYifQ.Umosc-ZzdKZOI6CKCCs8rA";
-
   try {
-    console.log("Updating restaurant...");
-
     const {
       name,
       type,
@@ -125,6 +122,7 @@ exports.updateRestaurant = async (req, res, next) => {
       description,
       address,
       image,
+      status,
     } = req.body;
 
     console.log(address);
@@ -157,11 +155,12 @@ exports.updateRestaurant = async (req, res, next) => {
       description: description || currentRestaurant.description,
       address: address || currentRestaurant.address,
       coordinates: coordinates || currentRestaurant.coordinates,
+      status: status || currentRestaurant.status,
     };
 
     // console.log("Update data:", data);
 
-    if (image !== "") {
+    if (image !== null && image !== "") {
       const ImgId = currentRestaurant.image.public_id;
       if (ImgId) {
         await cloudinary.uploader.destroy(ImgId);

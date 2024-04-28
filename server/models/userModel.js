@@ -49,6 +49,11 @@ const userSchema = new mongoose.Schema(
     },
 
     bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" }],
+
+    verified: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

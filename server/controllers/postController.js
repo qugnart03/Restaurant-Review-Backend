@@ -9,7 +9,7 @@ exports.createPost = async (req, res, next) => {
 
   try {
     //UPLOAD IMAGE IN CLOUDINARY
-    const result = await cloudinary.uploader.upload(image, {
+    const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "posts",
       width: 1200,
       crop: "scale",
@@ -36,10 +36,39 @@ exports.createPost = async (req, res, next) => {
 //SHOW POSTS
 exports.showPost = async (req, res, next) => {
   try {
-    const posts = await Post.find()
-      .sort({ createdAt: -1 })
-      .populate("postedBy", "name");
-    res.status(201).json({
+    const posts = await Post.aggregate([
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "users", // Tên của collection chứa thông tin người dùng
+          localField: "postedBy",
+          foreignField: "_id",
+          as: "postedBy",
+        },
+      },
+      {
+        $addFields: {
+          countComment: { $size: "$comments" }, // Đếm số lượng bình luận
+          countLike: { $size: "$likes" }, // Đếm số lượt thích
+        },
+      },
+      {
+        $project: {
+          image: 1,
+          title: 1,
+          content: 1,
+          "postedBy.name": 1,
+          countComment: 1,
+          countLike: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ]);
+
+    res.status(200).json({
       success: true,
       posts,
     });

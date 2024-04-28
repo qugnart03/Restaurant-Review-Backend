@@ -2,6 +2,7 @@ const userModel = require("../models/userModel");
 const User = require("../models/userModel");
 const ErrorResponse = require("../utils/errorResponse");
 const cloudinary = require("../utils/cloudinary");
+const sendEmail = require("../utils/sendEmail");
 
 //SIGN UP
 exports.signup = async (req, res, next) => {
@@ -9,6 +10,7 @@ exports.signup = async (req, res, next) => {
 
   try {
     const userExist = await User.exists({ email });
+
     if (userExist) {
       return next(new ErrorResponse("E-mail already registered", 400));
     }
@@ -45,6 +47,7 @@ exports.signin = async (req, res, next) => {
   }
 };
 
+//SEND TOKEN
 const sendTokenResponse = async (user, codeStatus, res) => {
   try {
     const token = await user.getJwtToken();
@@ -64,22 +67,15 @@ const sendTokenResponse = async (user, codeStatus, res) => {
 
 //LOG OUT
 exports.logout = (req, res, next) => {
-  if (req.cookies.token) {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
 
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
-  }
-
-  return res.status(400).json({
-    success: false,
-    message: "You are not logged in",
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
   });
 };
 
@@ -172,103 +168,27 @@ exports.loginWithToken = async (req, res, next) => {
   }
 };
 
-exports.updateRestaurantById = async (req, res, next) => {
+exports.sendEmail = async (req, res) => {
   try {
-    console.log("Updating restaurant...");
+    const user = await User.findById(req.user.id);
 
-    const {
-      name,
-      type,
-      country,
-      timeWork,
-      phone,
-      description,
-      address,
-      image,
-    } = req.body;
-
-    console.log("Request body:", req.body);
-
-    // Kiểm tra xem idRestaurant có được truyền từ request không
-    const idRestaurant = req.params.idRestaurant;
-    if (!idRestaurant) {
-      return res
-        .status(400)
-        .json({ success: false, message: "idRestaurant is required." });
-    }
-
-    // Tìm nhà hàng dựa trên idRestaurant và xác thực xem người dùng có quyền chỉnh sửa hay không
-    const currentRestaurant = await Restaurant.findOne({
-      _id: idRestaurant,
-    });
-
-    // Nếu không tìm thấy nhà hàng hoặc người dùng không có quyền chỉnh sửa, trả về lỗi 404
-    if (!currentRestaurant) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Restaurant not found or you do not have permission to update.",
-      });
-    }
-
-    console.log("Current restaurant:", currentRestaurant);
-
-    const startTime = timeWork ? timeWork.start : undefined;
-    const endTime = timeWork ? timeWork.end : undefined;
-
-    console.log("Start time:", startTime);
-    console.log("End time:", endTime);
-
-    const data = {
-      name: name || currentRestaurant.name,
-      type: type || currentRestaurant.type,
-      country: country || currentRestaurant.country,
-      timeWork: {
-        start: startTime || currentRestaurant.timeWork.start,
-        end: endTime || currentRestaurant.timeWork.end,
-      },
-      phone: phone || currentRestaurant.phone,
-      description: description || currentRestaurant.description,
-      address: address || currentRestaurant.address,
-    };
-
-    console.log("Update data:", data);
-
-    if (image !== "") {
-      const ImgId = currentRestaurant.image.public_id;
-      if (ImgId) {
-        await cloudinary.uploader.destroy(ImgId);
-      }
-
-      const newImage = await cloudinary.uploader.upload(req.file.path, {
-        folder: "restaurants",
-        width: 1200,
-        crop: "scale",
-      });
-
-      data.image = {
-        public_id: newImage.public_id,
-        url: newImage.secure_url,
-      };
-    }
-
-    console.log("Final data for update:", data);
-
-    // Cập nhật thông tin của nhà hàng
-    const restaurantUpdate = await Restaurant.findByIdAndUpdate(
-      idRestaurant,
-      data,
-      { new: true }
-    );
-
-    console.log("Updated restaurant:", restaurantUpdate);
-
-    res.status(200).json({
-      success: true,
-      restaurantUpdate,
-    });
+    url = `http://localhost:8080/api/verify/${user.id}`;
+    sendEmail(user.email, "Verify Email", url);
+    res.status(200).send({ message: "Email sent success" });
   } catch (error) {
-    console.error("Error updating restaurant:", error);
-    next(error);
+    res.status(500).send({ message: "Internal Server Error" });
+  }
+};
+
+exports.verifiedEmail = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+    if (!user) return res.status(400).send({ message: "Invalid link" });
+
+    await User.updateOne({ _id: user._id, verified: true });
+
+    res.status(200).send({ message: "Email verified successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error" });
   }
 };
