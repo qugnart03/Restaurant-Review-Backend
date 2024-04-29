@@ -158,7 +158,6 @@ exports.updateUser = async (req, res, next) => {
 exports.loginWithToken = async (req, res, next) => {
   try {
     const { id } = req.body;
-
     const user = await User.findById(id);
 
     if (!user) {
