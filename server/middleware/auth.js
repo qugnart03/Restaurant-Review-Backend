@@ -23,7 +23,7 @@ exports.isAuthenticated = async (req, res, next) => {
 
 // MIDDLEWARE FOR ADMIN
 exports.isAdmin = (req, res, next) => {
-  if (req.user.role !== "Admin") {
+  if (req.user.role !== "admin") {
     return next(new ErrorResponse("Access denied, you must an admin", 401));
   }
   next();
@@ -31,7 +31,7 @@ exports.isAdmin = (req, res, next) => {
 
 // MIDDLEWARE FOR OWNRESTAURANT
 exports.isOwnRestaurant = (req, res, next) => {
-  if (req.user.role !== "OwnRestaurant") {
+  if (req.user.role !== "ownrestaurant") {
     return next(
       new ErrorResponse("Access denied, you must own a restaurant", 401)
     );

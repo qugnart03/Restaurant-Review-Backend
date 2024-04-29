@@ -11,8 +11,13 @@ const {
   removeLike,
 } = require("../controllers/postController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
-
-router.post("/post/create", isAuthenticated, isAdmin, createPost);
+const upload = require("../middleware/multer");
+router.post(
+  "/post/create",
+  isAuthenticated,
+  upload.single("image"),
+  createPost
+);
 router.get("/posts/show", showPost);
 router.get("/post/:id", showSinglePost);
 router.delete("/delete/post/:id", isAuthenticated, isAdmin, deletePost);

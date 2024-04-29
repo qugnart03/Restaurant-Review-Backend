@@ -20,7 +20,6 @@ const upload = require("../middleware/multer");
 router.post(
   "/restaurant/create",
   isAuthenticated,
-  isAdmin,
   upload.single("image"),
   createRestaurant
 );
@@ -35,8 +34,8 @@ router.get(
 );
 router.delete(
   "/restaurant/delete/:idRestaurant",
-  isAuthenticated,
-  isAdmin,
+  // isAuthenticated,
+  // isAdmin,
   deleteRestaurant
 );
 router.put(

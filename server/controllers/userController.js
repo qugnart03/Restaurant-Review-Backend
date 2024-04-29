@@ -2,6 +2,7 @@ const userModel = require("../models/userModel");
 const User = require("../models/userModel");
 const ErrorResponse = require("../utils/errorResponse");
 const cloudinary = require("../utils/cloudinary");
+const sendEmail = require("../utils/sendEmail");
 
 //SIGN UP
 exports.signup = async (req, res, next) => {
@@ -9,6 +10,7 @@ exports.signup = async (req, res, next) => {
 
   try {
     const userExist = await User.exists({ email });
+
     if (userExist) {
       return next(new ErrorResponse("E-mail already registered", 400));
     }
@@ -45,6 +47,7 @@ exports.signin = async (req, res, next) => {
   }
 };
 
+//SEND TOKEN
 const sendTokenResponse = async (user, codeStatus, res) => {
   try {
     const token = await user.getJwtToken();
@@ -64,22 +67,15 @@ const sendTokenResponse = async (user, codeStatus, res) => {
 
 //LOG OUT
 exports.logout = (req, res, next) => {
-  if (req.cookies.token) {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
 
-    return res.status(200).json({
-      success: true,
-      message: "Logged out successfully",
-    });
-  }
-
-  return res.status(400).json({
-    success: false,
-    message: "You are not logged in",
+  return res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
   });
 };
 
@@ -168,5 +164,30 @@ exports.loginWithToken = async (req, res, next) => {
     sendTokenResponse(user, 200, res);
   } catch (error) {
     next(error);
+  }
+};
+
+exports.sendEmail = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    url = `http://localhost:8080/api/verify/${user.id}`;
+    sendEmail(user.email, "Verify Email", url);
+    res.status(200).send({ message: "Email sent success" });
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error" });
+  }
+};
+
+exports.verifiedEmail = async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id });
+    if (!user) return res.status(400).send({ message: "Invalid link" });
+
+    await User.updateOne({ _id: user._id, verified: true });
+
+    res.status(200).send({ message: "Email verified successfully" });
+  } catch (error) {
+    res.status(500).send({ message: "Internal Server Error" });
   }
 };

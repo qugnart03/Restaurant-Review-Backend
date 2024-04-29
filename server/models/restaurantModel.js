@@ -1,12 +1,11 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 
-const validTypes = [
-  "Nhà Hàng Pháp",
-  "Nhà Hàng Ý",
-  "Nhà Hàng Trung Hoa",
-  "Nhà Hàng Á",
-  "Nhà Hàng Âu",
+const dataTypeRestaurant = [
+  "frenchrestaurant",
+  "italianrestaurant",
+  "germanrestaurant",
+  "chineserestaurant",
 ];
 
 const restaurantSchema = mongoose.Schema(
@@ -17,12 +16,8 @@ const restaurantSchema = mongoose.Schema(
     },
     type: {
       type: String,
-      required: true,
-      //enum: validTypes,
-    },
-    country: {
-      type: String,
-      required: true,
+      required: [true, ""],
+      enum: dataTypeRestaurant,
     },
     timeWork: {
       start: {
@@ -49,6 +44,7 @@ const restaurantSchema = mongoose.Schema(
     image: {
       url: { type: String, default: null },
       public_id: { type: String, default: null },
+      name: { type: String, default: "" },
     },
     postedBy: {
       type: ObjectId,
@@ -65,6 +61,17 @@ const restaurantSchema = mongoose.Schema(
         },
       },
     ],
+
+    coordinates: {
+      latitude: {
+        type: Number,
+        default: null,
+      },
+      longitude: {
+        type: Number,
+        default: null,
+      },
+    },
 
     status: {
       type: Boolean,
