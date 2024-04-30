@@ -379,3 +379,34 @@ const getCoordinatesFromAddress = async (address, AccessToken) => {
     return null;
   }
 };
+
+exports.searchRestaurantByName = async (req, res, next) => {
+  try {
+    const searchTerm = req.params.name.toLowerCase();
+
+    if (!searchTerm) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a search term",
+      });
+    }
+
+    const foundRestaurants = await Restaurant.find({
+      name: { $regex: new RegExp(searchTerm, "i") },
+    });
+
+    if (foundRestaurants.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No restaurants found with the provided search term",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      restaurants: foundRestaurants,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
