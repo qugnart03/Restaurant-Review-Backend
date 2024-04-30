@@ -1,13 +1,6 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 
-const dataTypeRestaurant = [
-  "asianrestaurant",
-  "europeanrestaurant",
-  "americanrestaurant",
-  "africanrestaurant",
-];
-
 const restaurantSchema = mongoose.Schema(
   {
     name: {
@@ -17,7 +10,6 @@ const restaurantSchema = mongoose.Schema(
     type: {
       type: String,
       required: [true, ""],
-      enum: dataTypeRestaurant,
     },
     timeWork: {
       start: {

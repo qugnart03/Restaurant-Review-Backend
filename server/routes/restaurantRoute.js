@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   createRestaurant,
-  showRestaurant,
+  getAllRestaurant,
   // showSingleRestaurant,
   deleteRestaurant,
   updateRestaurant,
@@ -24,28 +24,24 @@ const upload = require("../middleware/multer");
 router.post(
   "/restaurant/create",
   isAuthenticated,
+  isOwnRestaurant,
   upload.single("image"),
   createRestaurant
 );
 
-router.get("/restaurant/show", showRestaurant);
-// router.get("/restaurant/show/:idRestaurant", showSingleRestaurant);
-router.get(
-  "/admin/restaurant/show",
-  isAuthenticated,
-  isOwnRestaurant,
-  showRestaurantWithAdmin
-);
+router.get("/restaurant/show", getAllRestaurant);
+
+router.get("/admin/restaurant/show", isAuthenticated, showRestaurantWithAdmin);
 router.delete(
   "/restaurant/delete/:idRestaurant",
-  // isAuthenticated,
-  // isAdmin,
+  isAuthenticated,
+  isOwnRestaurant,
   deleteRestaurant
 );
 router.put(
   "/restaurant/update",
   isAuthenticated,
-  isAdmin,
+  isOwnRestaurant,
   upload.single("image"),
   updateRestaurant
 );

@@ -23,7 +23,7 @@ const io = new Server(server);
 const errorHandler = require("./middleware/error");
 
 // Import routes
-const authRoutes = require("./routes/authRoute");
+const userRoutes = require("./routes/userRoute");
 const postRoute = require("./routes/postRoute");
 const restaurantRoute = require("./routes/restaurantRoute");
 const menuRoute = require("./routes/menuRoute");
@@ -42,7 +42,13 @@ app.use(
   })
 );
 app.use(cookieParser());
-app.use(cors());
+// app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // specify the exact origin
+    credentials: true, // allow credentials
+  })
+);
 
 // Prevent SQL injection
 app.use(mongoSanitize());
@@ -72,7 +78,7 @@ app.use(limiter);
 app.use(hpp());
 
 //ROUTES MIDDLEWARE
-app.use("/api", authRoutes);
+app.use("/api", userRoutes);
 app.use("/api", postRoute);
 app.use("/api", restaurantRoute);
 app.use("/api", menuRoute);

@@ -5,6 +5,7 @@ const User = require("../models/userModel");
 // CHECK IS USER IS AUTHENTICATED
 exports.isAuthenticated = async (req, res, next) => {
   const { token } = req.cookies;
+
   // MAKE SURE TOKEN EXISTS
   console.log(req.cookies);
   if (!token) {
@@ -26,6 +27,7 @@ exports.isAuthenticated = async (req, res, next) => {
 // MIDDLEWARE FOR ADMIN
 exports.isAdmin = (req, res, next) => {
   if (req.user.role !== "admin") {
+    console.log(req.user.role);
     return next(new ErrorResponse("Access denied, you must an admin", 401));
   }
   next();

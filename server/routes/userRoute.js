@@ -37,8 +37,10 @@ router.post(
 // Đăng nhập bằng token
 router.post("/login-with-token", loginWithToken);
 
+// Verify email
 router.get("/verify/:id", verifiedEmail);
 
+// Send email verified
 router.get("/sendVerification", isAuthenticated, sendEmail);
 
 module.exports = router;
