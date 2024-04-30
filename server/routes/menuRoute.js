@@ -12,21 +12,25 @@ const {
   getAllDishOfRestaurant,
   searchDishByName,
 } = require("../controllers/menuController");
-const { isAuthenticated, isAdmin } = require("../middleware/auth");
+const {
+  isAuthenticated,
+  isAdmin,
+  isOwnRestaurant,
+} = require("../middleware/auth");
 
 const upload = require("../middleware/multer");
 
 router.post(
   "/menu/create",
   isAuthenticated,
-  isAdmin,
+  isOwnRestaurant,
   upload.single("image"),
   addMenuItem
 );
 router.delete(
   "/menu/delete/dish/:idDish",
   isAuthenticated,
-  isAdmin,
+  isOwnRestaurant,
   deleteDishMenu
 );
 router.get("/menu/show", isAuthenticated, showAllMenuItem);
