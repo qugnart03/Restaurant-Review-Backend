@@ -57,7 +57,6 @@ const sendTokenResponse = async (user, codeStatus, res) => {
     if (process.env.NODE_ENV === "production") {
       options.secure = true;
     }
-    console.log("Token", token);
 
     res.status(codeStatus).cookie("token", token, options).json({
       success: true,
@@ -71,15 +70,10 @@ const sendTokenResponse = async (user, codeStatus, res) => {
 
 //LOG OUT
 exports.logout = (req, res, next) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  return res.status(200).json({
+  res.clearCookie("token");
+  res.status(200).json({
     success: true,
-    message: "Logged out successfully",
+    message: "logged out",
   });
 };
 

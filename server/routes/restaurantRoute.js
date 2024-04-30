@@ -12,6 +12,7 @@ const {
   showRecentRestaurant,
   showBookmarkedRestaurants,
   showRestaurantWithAdmin,
+  searchRestaurantByName,
 } = require("../controllers/restaurantController");
 const {
   isAuthenticated,
@@ -31,7 +32,12 @@ router.post(
 
 router.get("/restaurant/show", getAllRestaurant);
 
-router.get("/admin/restaurant/show", isAuthenticated, showRestaurantWithAdmin);
+router.get(
+  "/admin/restaurant/show",
+  isAuthenticated,
+  // isOwnRestaurant,
+  showRestaurantWithAdmin
+);
 router.delete(
   "/restaurant/delete/:idRestaurant",
   isAuthenticated,
@@ -56,5 +62,7 @@ router.get(
   isAuthenticated,
   showBookmarkedRestaurants
 );
+
+router.get("/search/restaurant/:name", isAuthenticated, searchRestaurantByName);
 
 module.exports = router;
