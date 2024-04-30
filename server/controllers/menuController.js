@@ -8,6 +8,8 @@ exports.addMenuItem = async (req, res, next) => {
     const { typeDish, nameDish, priceDish } = req.body;
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
+    // typeDish =
+    console.log(typeDish.replace(/\s/g, "").toLowerCase());
     if (!restaurant) {
       return res.status(404).json({
         success: false,
@@ -29,6 +31,7 @@ exports.addMenuItem = async (req, res, next) => {
       width: 1200,
       crop: "scale",
     });
+
     const newMenuItem = {
       typeDish,
       nameDish,

@@ -24,12 +24,12 @@ exports.createRestaurant = async (req, res, next) => {
     const startTime = timeWork ? timeWork.split("-")[0] : undefined;
     const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
-    //UPLOAD IMAGE IN CLOUDINARY
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "restaurants",
       width: 1200,
       crop: "scale",
     });
+
     const restaurant = await Restaurant.create({
       name,
       type,
@@ -44,20 +44,21 @@ exports.createRestaurant = async (req, res, next) => {
       },
       postedBy: req.user._id,
     });
+
     res.status(201).json({
       success: true,
       restaurant,
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
 
-//SHOW RESTAURANT
-exports.showRestaurant = async (req, res, next) => {
+//SHOW ALL RESTAURANT
+exports.getAllRestaurant = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find().sort({ createdAt: -1 });
+    const restaurants = await Restaurant.find();
+
     res.status(201).json({
       success: true,
       restaurants,

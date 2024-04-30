@@ -2,6 +2,7 @@ const User = require("../../models/userModel");
 const Post = require("../../models/postModel");
 const Restaurant = require("../../models/restaurantModel");
 const cloudinary = require("../../utils/cloudinary");
+const moment = require("moment");
 
 exports.getCounts = async (req, res) => {
   try {
@@ -18,7 +19,6 @@ exports.getCounts = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error while fetching counts:", error);
     res.status(500).json({
       success: false,
       error: "Internal Server Error",
@@ -51,7 +51,8 @@ exports.getPopularRestaurants = async (req, res, next) => {
       {
         $project: {
           name: 1,
-          image: 1, // Include the image field
+          image: 1,
+          postedBy: 1,
           bookmarksCount: { $size: "$bookmarks" },
           commentsCount: { $size: "$comments" },
           status: 1,
@@ -62,7 +63,7 @@ exports.getPopularRestaurants = async (req, res, next) => {
         $sort: { bookmarksCount: -1 },
       },
       {
-        $limit: 10,
+        $limit: 6,
       },
     ]);
 
@@ -71,21 +72,18 @@ exports.getPopularRestaurants = async (req, res, next) => {
       restaurants,
     });
   } catch (error) {
-    console.error("Error fetching top bookmarked restaurants:", error);
     res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
 
 exports.updateRestaurantById = async (req, res, next) => {
   try {
-    const { name, type, timeWork, phone, description, address, image } =
-      req.body;
-
     const idRestaurant = req.params.idRestaurant;
+
     if (!idRestaurant) {
       return res
         .status(400)
-        .json({ success: false, message: "idRestaurant is required." });
+        .json({ success: false, message: "Restaurant not found." });
     }
 
     const currentRestaurant = await Restaurant.findOne({
@@ -98,6 +96,23 @@ exports.updateRestaurantById = async (req, res, next) => {
         message:
           "Restaurant not found or you do not have permission to update.",
       });
+    }
+
+    const { name, type, timeWork, phone, description, address, image } =
+      req.body;
+
+    if (
+      currentRestaurant.name === name &&
+      currentRestaurant.type === type &&
+      currentRestaurant.timeWork === timeWork &&
+      currentRestaurant.phone === phone &&
+      currentRestaurant.description === description &&
+      currentRestaurant.address === address &&
+      !req.file
+    ) {
+      return res
+        .status(200)
+        .json({ success: true, message: "User information unchanged", user });
     }
 
     const startTime = timeWork ? timeWork.start : undefined;
@@ -115,10 +130,9 @@ exports.updateRestaurantById = async (req, res, next) => {
       address: address || currentRestaurant.address,
     };
 
-    if (image !== "") {
-      const ImgId = currentRestaurant.image.public_id;
-      if (ImgId) {
-        await cloudinary.uploader.destroy(ImgId);
+    if (req.file) {
+      if (currentRestaurant.image && currentRestaurant.image.public_id) {
+        await cloudinary.uploader.destroy(currentRestaurant.image.public_id);
       }
 
       const newImage = await cloudinary.uploader.upload(req.file.path, {
@@ -151,7 +165,7 @@ exports.updateRestaurantById = async (req, res, next) => {
 
 exports.getRestaurantById = async (req, res, next) => {
   try {
-    const { idRestaurant } = req.params;
+    const idRestaurant = req.params.idRestaurant;
 
     const restaurant = await Restaurant.findOne(
       { _id: idRestaurant },
@@ -222,7 +236,6 @@ exports.getUserById = async (req, res, next) => {
   }
 };
 
-//DELETE RESTAURANT
 exports.deleteUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.idUser);
@@ -245,7 +258,7 @@ exports.deleteUserById = async (req, res, next) => {
 
 exports.updateUserById = async (req, res, next) => {
   try {
-    const { name, address, phone, image, role } = req.body;
+    const { name, address, phone, role } = req.body;
 
     const user = await User.findById(req.params.idUser);
 
@@ -307,7 +320,7 @@ exports.getAllPosts = async (req, res, next) => {
       },
       {
         $lookup: {
-          from: "users", // Tên của collection chứa thông tin người dùng
+          from: "users",
           localField: "postedBy",
           foreignField: "_id",
           as: "postedBy",
@@ -315,8 +328,8 @@ exports.getAllPosts = async (req, res, next) => {
       },
       {
         $addFields: {
-          countComment: { $size: "$comments" }, // Đếm số lượng bình luận
-          countLike: { $size: "$likes" }, // Đếm số lượt thích
+          countComment: { $size: "$comments" },
+          countLike: { $size: "$likes" },
         },
       },
       {
@@ -342,42 +355,62 @@ exports.getAllPosts = async (req, res, next) => {
   }
 };
 
-const moment = require("moment");
-
 exports.getBookmarkAndCommentStats = async (req, res) => {
   try {
-    // Lấy dữ liệu tất cả nhà hàng
     const restaurants = await Restaurant.find(
       {},
       { _id: 1, name: 1, comments: 1 }
     );
 
-    // Khởi tạo mảng để lưu trữ kết quả
     const commentCountsByRestaurant = {};
 
-    // Lặp qua từng nhà hàng để tính tổng số comment trong từng ngày của tuần
     restaurants.forEach((restaurant) => {
       const { _id, name, comments } = restaurant;
       const commentStats = {};
 
-      // Lặp qua từng comment của nhà hàng để phân loại theo ngày trong tuần
       comments.forEach((comment) => {
         const createdDate = moment(comment.created);
-        const dayOfWeek = createdDate.day(); // Lấy ngày trong tuần (0: Chủ nhật, 1: Thứ 2, ..., 6: Thứ 7)
-        commentStats[dayOfWeek] = (commentStats[dayOfWeek] || 0) + 1; // Tăng số comment của ngày đó lên 1
+        const dayOfWeek = createdDate.day();
+        commentStats[dayOfWeek] = (commentStats[dayOfWeek] || 0) + 1;
       });
 
-      // Lưu tổng số comment của từng ngày trong tuần vào mảng kết quả
       commentCountsByRestaurant[_id] = { name: name };
       for (let i = 0; i < 7; i++) {
         commentCountsByRestaurant[_id][i] = commentStats[i] || 0;
       }
     });
 
-    // Trả về kết quả
     res.json({ success: true, commentCountsByRestaurant });
   } catch (error) {
     console.error("Error while getting bookmark and comment stats:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+exports.getPostRecent = async (req, res, next) => {
+  try {
+    const posts = await Post.aggregate([
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "postedBy",
+          foreignField: "_id",
+          as: "postedBy",
+        },
+      },
+      {
+        $project: { image: 1, title: 1, "postedBy.name": 1, createdAt: 1 },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      posts,
+    });
+  } catch (error) {
+    next(error);
   }
 };

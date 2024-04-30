@@ -36,6 +36,7 @@ exports.signin = async (req, res, next) => {
     }
 
     const user = await User.findOne({ email }).select("+password");
+
     if (!user || !(await user.comparePassword(password))) {
       return next(new ErrorResponse("Invalid credentials", 400));
     }
@@ -51,10 +52,13 @@ exports.signin = async (req, res, next) => {
 const sendTokenResponse = async (user, codeStatus, res) => {
   try {
     const token = await user.getJwtToken();
+
     const options = { maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true }; // 7 days
     if (process.env.NODE_ENV === "production") {
       options.secure = true;
     }
+    console.log("Token", token);
+
     res.status(codeStatus).cookie("token", token, options).json({
       success: true,
       id: user._id,
@@ -95,6 +99,9 @@ exports.userProfile = async (req, res, next) => {
 
 //UPDATE USER
 exports.updateUser = async (req, res, next) => {
+  console.log("cookies");
+  console.log(req.cookies);
+  console.log("cookies");
   try {
     const { email, name, address, phone } = req.body;
 
@@ -174,9 +181,10 @@ exports.sendEmail = async (req, res) => {
 
     url = `http://localhost:8080/api/verify/${user.id}`;
     sendEmail(user.email, "Verify Email", url);
+
     res.status(200).send({ message: "Email sent success" });
   } catch (error) {
-    res.status(500).send({ message: "Internal Server Error" });
+    res.status(500).send({ message: "Email sent failed" });
   }
 };
 
