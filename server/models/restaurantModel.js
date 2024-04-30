@@ -2,10 +2,10 @@ const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 
 const dataTypeRestaurant = [
-  "frenchrestaurant",
-  "italianrestaurant",
-  "germanrestaurant",
-  "chineserestaurant",
+  "asianrestaurant",
+  "europeanrestaurant",
+  "americanrestaurant",
+  "africanrestaurant",
 ];
 
 const restaurantSchema = mongoose.Schema(

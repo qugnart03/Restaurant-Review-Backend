@@ -333,11 +333,12 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 };
 
 exports.showRestaurantWithAdmin = async (req, res, next) => {
-  console.log(req.user._id);
+  console.log(req.user);
   try {
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
     if (!restaurant) {
+      console.log("Restaurant not found for this user");
       return res.status(404).json({
         success: false,
         message: "Restaurant not found for this user",

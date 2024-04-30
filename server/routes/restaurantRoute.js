@@ -13,7 +13,11 @@ const {
   showBookmarkedRestaurants,
   showRestaurantWithAdmin,
 } = require("../controllers/restaurantController");
-const { isAuthenticated, isAdmin } = require("../middleware/auth");
+const {
+  isAuthenticated,
+  isAdmin,
+  isOwnRestaurant,
+} = require("../middleware/auth");
 
 const upload = require("../middleware/multer");
 
@@ -29,7 +33,7 @@ router.get("/restaurant/show", showRestaurant);
 router.get(
   "/admin/restaurant/show",
   isAuthenticated,
-  isAdmin,
+  isOwnRestaurant,
   showRestaurantWithAdmin
 );
 router.delete(
