@@ -8,15 +8,7 @@ exports.addMenuItem = async (req, res, next) => {
     const { typeDish, nameDish, priceDish } = req.body;
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
-    // typeDish =
-    console.log(typeDish.replace(/\s/g, "").toLowerCase());
-    if (!restaurant) {
-      return res.status(404).json({
-        success: false,
-        error: "Restaurant not found for this user",
-      });
-    }
-
+    console.log(typeDish, nameDish, priceDish);
     let existingMenu = await Menu.findOne({ restaurant: restaurant._id });
 
     if (!existingMenu) {
@@ -28,7 +20,7 @@ exports.addMenuItem = async (req, res, next) => {
 
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "restaurants",
-      width: 1200,
+      width: 400,
       crop: "scale",
     });
 
@@ -304,7 +296,7 @@ exports.updateDishMenu = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Dish updated successfully",
-      menu: menu,
+      menu: menu.items[dishIndex],
     });
   } catch (error) {
     next(error);

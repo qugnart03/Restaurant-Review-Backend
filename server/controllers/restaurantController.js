@@ -126,23 +126,14 @@ exports.updateRestaurant = async (req, res, next) => {
       status,
     } = req.body;
 
-    console.log(address);
-
     const coordinates = await getCoordinatesFromAddress(address, AccessToken);
-    console.log(coordinates);
-    // console.log("Request body:", req.body);
 
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
 
-    // console.log("Current restaurant:", currentRestaurant);
-
     const startTime = timeWork ? timeWork.start : undefined;
     const endTime = timeWork ? timeWork.end : undefined;
-
-    // console.log("Start time:", startTime);
-    // console.log("End time:", endTime);
 
     const data = {
       name: name || currentRestaurant.name,
@@ -158,8 +149,6 @@ exports.updateRestaurant = async (req, res, next) => {
       coordinates: coordinates || currentRestaurant.coordinates,
       status: status || currentRestaurant.status,
     };
-
-    // console.log("Update data:", data);
 
     if (image !== null && image !== "") {
       const ImgId = currentRestaurant.image.public_id;
@@ -179,15 +168,11 @@ exports.updateRestaurant = async (req, res, next) => {
       };
     }
 
-    console.log("Final data for update:", data);
-
     const restaurantUpdate = await Restaurant.findByIdAndUpdate(
       currentRestaurant._id,
       data,
       { new: true }
     );
-
-    console.log("Updated restaurant:", restaurantUpdate);
 
     res.status(200).json({
       success: true,
@@ -382,29 +367,19 @@ const getCoordinatesFromAddress = async (address, AccessToken) => {
 
 exports.searchRestaurantByName = async (req, res, next) => {
   try {
-    const searchTerm = req.params.name.toLowerCase();
+    let filter = {};
 
-    if (!searchTerm) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a search term",
-      });
+    const searchTerm = req.params.name ? req.params.name.toLowerCase() : "";
+
+    if (searchTerm) {
+      filter = { name: { $regex: new RegExp(searchTerm, "i") } };
     }
 
-    const foundRestaurants = await Restaurant.find({
-      name: { $regex: new RegExp(searchTerm, "i") },
-    });
-
-    if (foundRestaurants.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No restaurants found with the provided search term",
-      });
-    }
+    const foundRestaurants = await Restaurant.find(filter);
 
     res.status(200).json({
       success: true,
-      restaurants: foundRestaurants,
+      restaurants: foundRestaurants || [],
     });
   } catch (error) {
     next(error);

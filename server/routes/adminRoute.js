@@ -13,6 +13,11 @@ const {
   getAllPosts,
   getBookmarkAndCommentStats,
   getPostRecent,
+  deleteRestaurantById,
+  updateItemsById,
+  showMenuByRestaurantId,
+  getItemsById,
+  deleteItemsById,
 } = require("../admin/controllers/HomeController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 const upload = require("../middleware/multer");
@@ -47,6 +52,13 @@ router.delete(
   deleteUserById
 );
 
+router.delete(
+  "/admin/delete/restaurant/:idRestaurant",
+  isAuthenticated,
+  isAdmin,
+  deleteRestaurantById
+);
+
 router.put(
   "/admin/update/user/:idUser",
   isAuthenticated,
@@ -63,4 +75,22 @@ router.get(
   isAdmin,
   getBookmarkAndCommentStats
 );
+
+router.get(
+  "/admin/restaurant/menu/:idRestaurant",
+  isAuthenticated,
+  showMenuByRestaurantId
+);
+
+router.get("/admin/menu/:idItem", isAuthenticated, getItemsById);
+
+router.put(
+  "/admin/update/menu/:idItem",
+  isAuthenticated,
+
+  upload.single("image"),
+  updateItemsById
+);
+
+router.delete("/admin/delete/menu/:idItem", isAuthenticated, deleteItemsById);
 module.exports = router;

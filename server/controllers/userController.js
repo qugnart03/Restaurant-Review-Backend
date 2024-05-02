@@ -194,3 +194,35 @@ exports.verifiedEmail = async (req, res) => {
     res.status(500).send({ message: "Internal Server Error" });
   }
 };
+
+exports.searchUserByName = async (req, res, next) => {
+  try {
+    const searchTerm = req.params.name.toLowerCase();
+
+    if (!searchTerm.trim()) {
+      const allUsers = await User.find();
+      return res.status(200).json({
+        success: true,
+        users: allUsers,
+      });
+    }
+
+    const foundUsers = await User.find({
+      name: { $regex: new RegExp(searchTerm, "i") },
+    });
+
+    if (foundUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No users found with the provided search term",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      users: foundUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

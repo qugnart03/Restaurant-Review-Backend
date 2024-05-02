@@ -47,7 +47,7 @@ router.delete(
 router.put(
   "/restaurant/update",
   isAuthenticated,
-  isOwnRestaurant,
+
   upload.single("image"),
   updateRestaurant
 );
