@@ -20,7 +20,8 @@ exports.createRestaurant = async (req, res, next) => {
 
     const { name, type, country, timeWork, phone, description, address } =
       req.body;
-
+    const coordinates = await getCoordinatesFromAddress(address, AccessToken);
+    console.log(coordinates);
     const startTime = timeWork ? timeWork.split("-")[0] : undefined;
     const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
@@ -42,6 +43,7 @@ exports.createRestaurant = async (req, res, next) => {
         public_id: result.public_id,
         url: result.secure_url,
       },
+      coordinates,
       postedBy: req.user._id,
     });
 
@@ -114,6 +116,8 @@ const AccessToken =
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    console.log(req.body);
+
     const {
       name,
       type,
@@ -126,17 +130,15 @@ exports.updateRestaurant = async (req, res, next) => {
       status,
     } = req.body;
 
-    console.log(address);
-
     const coordinates = await getCoordinatesFromAddress(address, AccessToken);
-    console.log(coordinates);
+    // console.log(coordinates);
     // console.log("Request body:", req.body);
 
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
 
-    // console.log("Current restaurant:", currentRestaurant);
+    console.log("Current restaurant:", currentRestaurant);
 
     const startTime = timeWork ? timeWork.start : undefined;
     const endTime = timeWork ? timeWork.end : undefined;
@@ -179,7 +181,7 @@ exports.updateRestaurant = async (req, res, next) => {
       };
     }
 
-    console.log("Final data for update:", data);
+    // console.log("Final data for update:", data);
 
     const restaurantUpdate = await Restaurant.findByIdAndUpdate(
       currentRestaurant._id,
@@ -187,7 +189,7 @@ exports.updateRestaurant = async (req, res, next) => {
       { new: true }
     );
 
-    console.log("Updated restaurant:", restaurantUpdate);
+    // console.log("Updated restaurant:", restaurantUpdate);
 
     res.status(200).json({
       success: true,

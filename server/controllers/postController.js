@@ -197,7 +197,7 @@ exports.addLike = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .populate("postedBy", "name");
     main.io.emit("add-like", posts);
-
+ 
     res.status(200).json({
       success: true,
       post,
