@@ -59,9 +59,14 @@ exports.createRestaurant = async (req, res, next) => {
 //SHOW ALL RESTAURANT
 exports.getAllRestaurant = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find();
+    const restaurants = await Restaurant.find()
+      .populate({
+        path: "postedBy",
+        select: "name image",
+      })
+      .exec();
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       restaurants,
     });
@@ -73,7 +78,12 @@ exports.getAllRestaurant = async (req, res, next) => {
 //SHOW SINGLE RESTAURANT
 exports.showSingleRestaurant = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.idRestaurant);
+    const restaurant = await Restaurant.findById(req.params.idRestaurant)
+      .populate({
+        path: "postedBy",
+        select: "name image",
+      })
+      .exec();
     res.status(200).json({
       success: true,
       restaurant,
@@ -131,20 +141,13 @@ exports.updateRestaurant = async (req, res, next) => {
     } = req.body;
 
     const coordinates = await getCoordinatesFromAddress(address, AccessToken);
-    // console.log(coordinates);
-    // console.log("Request body:", req.body);
 
     const currentRestaurant = await Restaurant.findOne({
       postedBy: req.user._id,
     });
 
-    console.log("Current restaurant:", currentRestaurant);
-
     const startTime = timeWork ? timeWork.start : undefined;
     const endTime = timeWork ? timeWork.end : undefined;
-
-    // console.log("Start time:", startTime);
-    // console.log("End time:", endTime);
 
     const data = {
       name: name || currentRestaurant.name,
@@ -160,8 +163,6 @@ exports.updateRestaurant = async (req, res, next) => {
       coordinates: coordinates || currentRestaurant.coordinates,
       status: status || currentRestaurant.status,
     };
-
-    // console.log("Update data:", data);
 
     if (image !== null && image !== "") {
       const ImgId = currentRestaurant.image.public_id;
@@ -181,15 +182,11 @@ exports.updateRestaurant = async (req, res, next) => {
       };
     }
 
-    // console.log("Final data for update:", data);
-
     const restaurantUpdate = await Restaurant.findByIdAndUpdate(
       currentRestaurant._id,
       data,
       { new: true }
     );
-
-    // console.log("Updated restaurant:", restaurantUpdate);
 
     res.status(200).json({
       success: true,
@@ -201,19 +198,39 @@ exports.updateRestaurant = async (req, res, next) => {
   }
 };
 //ADD COMMENT
+
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
   try {
+    let image = null;
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "comments",
+        width: 400,
+        crop: "scale",
+      });
+
+      image = {
+        public_id: result.public_id,
+        url: result.secure_url,
+      };
+    }
+
     const restaurantComment = await Restaurant.findByIdAndUpdate(
       req.params.id,
       {
-        $push: { comments: { text: comment, postedBy: req.user._id } },
+        $push: {
+          comments: { text: comment, image: image, postedBy: req.user._id },
+        },
       },
       { new: true }
     );
-    const restaurant = await Restaurant.findById(
-      restaurantComment._id
-    ).populate("comments.postedBy", "name email");
+
+    const restaurant = await Restaurant.findById(restaurantComment._id)
+      .populate("comments.postedBy", "name email")
+      .exec();
+
     res.status(200).json({
       success: true,
       restaurant,
@@ -224,76 +241,41 @@ exports.addComment = async (req, res, next) => {
 };
 
 //ADD BOOKMARK
-exports.addBookmark = async (req, res, next) => {
+exports.toggleBookmark = async (req, res, next) => {
   try {
-    const userId = req.user._id;
     const restaurantId = req.params.id;
+    const userId = req.user._id;
 
-    const user = await User.findById(userId);
-    if (user.bookmarks.includes(restaurantId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Restaurant already bookmarked",
-      });
+    const restaurant = await Restaurant.findById(restaurantId);
+    if (!restaurant) {
+      return res
+        .status(404)
+        .json({ success: false, error: "restaurant not found" });
     }
 
-    await User.findByIdAndUpdate(
-      userId,
-      { $addToSet: { bookmarks: restaurantId } },
-      { new: true }
+    const bookmarkIndex = restaurant.bookmarks.findIndex(
+      (userId) => userId.toString() === userId.toString()
     );
 
-    const restaurant = await Restaurant.findByIdAndUpdate(
-      restaurantId,
-      { $addToSet: { bookmarks: userId } },
-      { new: true }
-    );
+    if (bookmarkIndex === -1) {
+      restaurant.bookmarks.push(userId);
+      restaurant.bookmarked = true;
 
-    const restaurants = await Restaurant.find()
-      .sort({ createdAt: -1 })
-      .populate("postedBy", "name");
-    main.io.emit("add-like", restaurants);
+      req.user.bookmarks.push(restaurantId);
+      await req.user.save();
+    } else {
+      restaurant.bookmarks.splice(bookmarkIndex, 1);
+      restaurant.bookmarked = false;
 
-    res.status(200).json({
-      success: true,
-      message: "Bookmark added successfully",
-      restaurant,
-      restaurants,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
+      req.user.bookmarks = req.user.bookmarks.filter(
+        (restaurantId) => restaurantId.toString() !== restaurantId.toString()
+      );
+      await req.user.save();
+    }
 
-//REMOVE LIKE
-exports.removeBookmark = async (req, res, next) => {
-  try {
-    const restaurant = await Restaurant.findByIdAndUpdate(
-      req.params.id,
-      {
-        $pull: { bookmarks: req.user._id },
-      },
-      { new: true }
-    );
+    await restaurant.save();
 
-    await User.findByIdAndUpdate(
-      req.user._id,
-      {
-        $pull: { bookmarks: req.params.id },
-      },
-      { new: true }
-    );
-
-    const restaurants = await Restaurant.find()
-      .sort({ createdAt: -1 })
-      .populate("postedBy", "name");
-    main.io.emit("remove-like", restaurants);
-
-    res.status(200).json({
-      success: true,
-      restaurant,
-      restaurants,
-    });
+    res.status(200).json({ success: true, restaurant });
   } catch (error) {
     next(error);
   }
@@ -384,30 +366,41 @@ const getCoordinatesFromAddress = async (address, AccessToken) => {
 
 exports.searchRestaurantByName = async (req, res, next) => {
   try {
-    const searchTerm = req.params.name.toLowerCase();
+    let filter = {};
 
-    if (!searchTerm) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a search term",
-      });
+    const searchTerm = req.params.name ? req.params.name.toLowerCase() : "";
+
+    if (searchTerm) {
+      filter = { name: { $regex: new RegExp(searchTerm, "i") } };
     }
 
-    const foundRestaurants = await Restaurant.find({
-      name: { $regex: new RegExp(searchTerm, "i") },
-    });
-
-    if (foundRestaurants.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No restaurants found with the provided search term",
-      });
-    }
+    const foundRestaurants = await Restaurant.find(filter);
 
     res.status(200).json({
       success: true,
-      restaurants: foundRestaurants,
+      restaurants: foundRestaurants || [],
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.searchRestaurantByType = async (req, res, next) => {
+  try {
+    const type = req.params.type;
+    let restaurants;
+
+    if (type === "all") {
+      restaurants = await Restaurant.find().select(
+        "_id name type phone description address postedBy"
+      );
+    } else {
+      restaurants = await Restaurant.find({ type: type }).select(
+        "_id name type phone description address postedBy"
+      );
+    }
+
+    res.status(200).json({ success: true, restaurants: restaurants });
   } catch (error) {
     next(error);
   }

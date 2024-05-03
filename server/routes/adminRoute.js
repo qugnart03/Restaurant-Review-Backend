@@ -13,18 +13,44 @@ const {
   getAllPosts,
   getBookmarkAndCommentStats,
   getPostRecent,
-} = require("../admin/controllers/HomeController");
+  deleteRestaurantById,
+  updateItemsById,
+  showMenuByRestaurantId,
+  getItemsById,
+  deleteItemsById,
+} = require("../admin/controllers/homeController");
 const { isAuthenticated, isAdmin } = require("../middleware/auth");
 const upload = require("../middleware/multer");
 
+// DASHBOARD
 router.get("/admin/total", isAuthenticated, isAdmin, getCounts);
+
 router.get("/admin/latest/user", isAuthenticated, isAdmin, getLatestUsers);
+
 router.get(
   "/admin/popular/restaurant",
   isAuthenticated,
   isAdmin,
   getPopularRestaurants
 );
+
+router.get("/admin/latest/post", isAuthenticated, isAdmin, getPostRecent);
+
+router.get(
+  "/admin/chart",
+  isAuthenticated,
+  isAdmin,
+  getBookmarkAndCommentStats
+);
+
+// RESTAURANT PAGE
+router.get(
+  "/admin/restaurant/:idRestaurant",
+  isAuthenticated,
+  isAdmin,
+  getRestaurantById
+);
+
 router.put(
   "/admin/update/restaurant/:idRestaurant",
   isAuthenticated,
@@ -32,12 +58,15 @@ router.put(
   upload.single("image"),
   updateRestaurantById
 );
-router.get(
-  "/admin/restaurant/:idRestaurant",
+
+router.delete(
+  "/admin/delete/restaurant/:idRestaurant",
   isAuthenticated,
   isAdmin,
-  getRestaurantById
+  deleteRestaurantById
 );
+
+// USER PAGE
 router.get("/admin/show/user", isAuthenticated, isAdmin, getAllUsers);
 router.get("/admin/show/user/:idUser", isAuthenticated, isAdmin, getUserById);
 router.delete(
@@ -55,12 +84,32 @@ router.put(
   updateUserById
 );
 
-router.get("/admin/show/post", isAuthenticated, isAdmin, getAllPosts);
-router.get("/admin/latest/post", isAuthenticated, isAdmin, getPostRecent);
+// MENU PAGE
+
 router.get(
-  "/admin/chart",
+  "/admin/restaurant/menu/:idRestaurant",
   isAuthenticated,
   isAdmin,
-  getBookmarkAndCommentStats
+  showMenuByRestaurantId
 );
+
+router.get("/admin/menu/:idItem", isAuthenticated, isAdmin, getItemsById);
+
+router.put(
+  "/admin/update/menu/:idItem",
+  isAuthenticated,
+  isAdmin,
+  upload.single("image"),
+  updateItemsById
+);
+router.delete(
+  "/admin/delete/menu/:idItem",
+  isAuthenticated,
+  isAdmin,
+  deleteItemsById
+);
+
+// POST
+router.get("/admin/show/post", isAuthenticated, isAdmin, getAllPosts);
+
 module.exports = router;

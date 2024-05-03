@@ -80,10 +80,10 @@ exports.showPost = async (req, res, next) => {
 //SHOW SINGLE POST
 exports.showSinglePost = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
-      "comments.postedBy",
-      "name"
-    );
+    const post = await Post.findById(req.params.id).populate({
+      path: "comments.postedBy",
+      select: "name image",
+    });
     res.status(200).json({
       success: true,
       post,
@@ -163,10 +163,27 @@ exports.updatePost = async (req, res, next) => {
 exports.addComment = async (req, res, next) => {
   const { comment } = req.body;
   try {
+    let image = null;
+
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "comments",
+        width: 400,
+        crop: "scale",
+      });
+
+      image = {
+        public_id: result.public_id,
+        url: result.secure_url,
+      };
+    }
+
     const postComment = await Post.findByIdAndUpdate(
       req.params.id,
       {
-        $push: { comments: { text: comment, postedBy: req.user._id } },
+        $push: {
+          comments: { text: comment, image: image, postedBy: req.user._id },
+        },
       },
       { new: true }
     );
@@ -184,25 +201,30 @@ exports.addComment = async (req, res, next) => {
 };
 
 //ADD LIKE
-exports.addLike = async (req, res, next) => {
+exports.toggleLike = async (req, res, next) => {
   try {
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      {
-        $addToSet: { likes: req.user._id },
-      },
-      { new: true }
+    const postId = req.params.id;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    const likeIndex = post.likes.findIndex(
+      (userId) => userId.toString() === req.user._id.toString()
     );
-    const posts = await Post.find()
-      .sort({ createdAt: -1 })
-      .populate("postedBy", "name");
-    main.io.emit("add-like", posts);
- 
-    res.status(200).json({
-      success: true,
-      post,
-      posts,
-    });
+
+    if (likeIndex === -1) {
+      post.likes.push(req.user._id);
+      post.liked = true;
+    } else {
+      post.likes.splice(likeIndex, 1);
+      post.liked = false;
+    }
+
+    await post.save();
+
+    res.status(200).json({ success: true, post });
   } catch (error) {
     next(error);
   }

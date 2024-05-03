@@ -3,6 +3,8 @@ const Post = require("../../models/postModel");
 const Restaurant = require("../../models/restaurantModel");
 const cloudinary = require("../../utils/cloudinary");
 const moment = require("moment");
+const Menu = require("../../models/menuModel");
+const mongoose = require("mongoose");
 
 exports.getCounts = async (req, res) => {
   try {
@@ -301,7 +303,6 @@ exports.updateUserById = async (req, res, next) => {
     const userUpdate = await User.findByIdAndUpdate(user._id, data, {
       new: true,
     });
-    console.log(userUpdate);
 
     res.status(200).json({
       success: true,
@@ -410,6 +411,167 @@ exports.getPostRecent = async (req, res, next) => {
       success: true,
       posts,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteRestaurantById = async (req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.idRestaurant);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        message: "Restaurant not found",
+      });
+    }
+
+    const ImgId = restaurant.image.public_id;
+    if (ImgId) {
+      await cloudinary.uploader.destroy(ImgId);
+    }
+
+    await restaurant.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Restaurant deleted",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.showMenuByRestaurantId = async (req, res, next) => {
+  try {
+    const { idRestaurant } = req.params;
+
+    const restaurant = await Restaurant.findById(idRestaurant);
+    if (!restaurant) {
+      return res.status(404).json({
+        success: false,
+        error: "Restaurant not found",
+      });
+    }
+
+    const menu = await Menu.findOne({ restaurant: idRestaurant });
+    if (!menu) {
+      return res.status(200).json({
+        success: true,
+        menu: { items: [] },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      menu,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getItemsById = async (req, res, next) => {
+  try {
+    const { idItem } = req.params;
+
+    const menu = await Menu.findOne({ "items._id": idItem });
+    if (!menu) {
+      return res.status(404).json({
+        success: false,
+        error: "Menu not found",
+      });
+    }
+
+    const menuItem = menu.items.find((item) => item._id == idItem);
+    if (!menuItem) {
+      return res.status(404).json({
+        success: false,
+        error: "Item not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      item: menuItem,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.updateItemsById = async (req, res, next) => {
+  try {
+    const { typeDish, nameDish, priceDish } = req.body;
+
+    const menu = await Menu.findOne({ "items._id": req.params.idItem });
+
+    if (!menu) {
+      return res.status(404).json({
+        success: false,
+        error: "Menu not found for this restaurant",
+      });
+    }
+
+    const dishIndex = menu.items.findIndex(
+      (item) => item._id.toString() === req.params.idItem
+    );
+
+    if (dishIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: "Dish not found in the menu",
+      });
+    }
+
+    if (typeDish) menu.items[dishIndex].typeDish = typeDish;
+    if (nameDish) menu.items[dishIndex].nameDish = nameDish;
+    if (priceDish) menu.items[dishIndex].priceDish = priceDish;
+
+    if (req.file) {
+      const newImage = await cloudinary.uploader.upload(req.file.path, {
+        folder: "menu",
+        width: 1200,
+        crop: "scale",
+      });
+      menu.items[dishIndex].image = {
+        public_id: newImage.public_id,
+        url: newImage.secure_url,
+      };
+    }
+
+    await menu.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Dish updated successfully",
+      menu: menu.items[dishIndex],
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteItemsById = async (req, res, next) => {
+  try {
+    const result = await Menu.updateOne(
+      { "items._id": new mongoose.Types.ObjectId(req.params.idItem) },
+      {
+        $pull: {
+          items: { _id: new mongoose.Types.ObjectId(req.params.idItem) },
+        },
+      }
+    );
+
+    if (result.nModified === 0) {
+      return res.status(404).json({
+        success: false,
+        error: "Menu item not found",
+      });
+    }
+
+    res.status(200).json({ success: true, message: "Menu item deleted" });
   } catch (error) {
     next(error);
   }
