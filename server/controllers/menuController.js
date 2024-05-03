@@ -201,12 +201,10 @@ exports.getAllDishesByType = async (req, res, next) => {
     let dishes;
 
     if (req.user.role === "user") {
-      console.log("USER");
       if (type === "all") {
         dishes = await Menu.find();
       } else {
         dishes = await Menu.find({ "items.typeDish": type });
-        console.log("xzxz");
       }
     } else {
       const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
@@ -216,12 +214,10 @@ exports.getAllDishesByType = async (req, res, next) => {
           .json({ success: false, error: "Restaurant not found" });
       }
 
-      console.log("Admin ROLE");
       dishes = await Menu.find({ restaurant: restaurant._id });
     }
 
     if (!(type === "all")) {
-      console.log("zcxxzcz");
       dishes = dishes
         .map((dish) => ({
           _id: dish._id,

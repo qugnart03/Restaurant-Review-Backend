@@ -46,6 +46,10 @@ const restaurantSchema = mongoose.Schema(
     comments: [
       {
         text: String,
+        image: {
+          url: { type: String, default: null },
+          public_id: { type: String, default: null },
+        },
         created: { type: Date, default: Date.now },
         postedBy: {
           type: ObjectId,

@@ -12,26 +12,12 @@ const {
   getAllDishOfRestaurant,
   searchDishByName,
 } = require("../controllers/menuController");
-const {
-  isAuthenticated,
-  isAdmin,
-  isOwnRestaurant,
-} = require("../middleware/auth");
+
+const { isAuthenticated, isOwnRestaurant } = require("../middleware/auth");
 
 const upload = require("../middleware/multer");
 
-router.post(
-  "/menu/create",
-  isAuthenticated,
-  upload.single("image"),
-  addMenuItem
-);
-router.delete(
-  "/menu/delete/dish/:idDish",
-  isAuthenticated,
-  isOwnRestaurant,
-  deleteDishMenu
-);
+// NOT PERMISSION
 router.get("/menu/show", isAuthenticated, showAllMenuItem);
 router.get("/menu/show/dish", isAuthenticated, showMenuItem);
 router.get("/typeDish", isAuthenticated, getType);
@@ -41,9 +27,23 @@ router.get(
   isAuthenticated,
   getAllDishOfRestaurant
 );
-
 router.get("/dish/:idDish", isAuthenticated, showDishByID);
 router.get("/menu/search/dish/:name", isAuthenticated, searchDishByName);
+
+// OWNRESTAURANT
+router.post(
+  "/menu/create",
+  isAuthenticated,
+  isOwnRestaurant,
+  upload.single("image"),
+  addMenuItem
+);
+router.delete(
+  "/menu/delete/dish/:idDish",
+  isAuthenticated,
+  isOwnRestaurant,
+  deleteDishMenu
+);
 router.put(
   "/menu/update/dish/:idDish",
   isAuthenticated,

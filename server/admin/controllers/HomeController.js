@@ -4,6 +4,7 @@ const Restaurant = require("../../models/restaurantModel");
 const cloudinary = require("../../utils/cloudinary");
 const moment = require("moment");
 const Menu = require("../../models/menuModel");
+const mongoose = require("mongoose");
 
 exports.getCounts = async (req, res) => {
   try {
@@ -302,7 +303,6 @@ exports.updateUserById = async (req, res, next) => {
     const userUpdate = await User.findByIdAndUpdate(user._id, data, {
       new: true,
     });
-    console.log(userUpdate);
 
     res.status(200).json({
       success: true,
@@ -455,10 +455,8 @@ exports.showMenuByRestaurantId = async (req, res, next) => {
       });
     }
 
-    // Tìm menu của nhà hàng
     const menu = await Menu.findOne({ restaurant: idRestaurant });
     if (!menu) {
-      // Nếu không có menu, trả về một mảng rỗng
       return res.status(200).json({
         success: true,
         menu: { items: [] },
@@ -478,7 +476,6 @@ exports.getItemsById = async (req, res, next) => {
   try {
     const { idItem } = req.params;
 
-    // Tìm món ăn dựa trên ID
     const menu = await Menu.findOne({ "items._id": idItem });
     if (!menu) {
       return res.status(404).json({
@@ -487,7 +484,6 @@ exports.getItemsById = async (req, res, next) => {
       });
     }
 
-    // Lấy thông tin chi tiết của món ăn
     const menuItem = menu.items.find((item) => item._id == idItem);
     if (!menuItem) {
       return res.status(404).json({
@@ -511,8 +507,6 @@ exports.updateItemsById = async (req, res, next) => {
 
     const menu = await Menu.findOne({ "items._id": req.params.idItem });
 
-    console.log(menu);
-
     if (!menu) {
       return res.status(404).json({
         success: false,
@@ -523,8 +517,6 @@ exports.updateItemsById = async (req, res, next) => {
     const dishIndex = menu.items.findIndex(
       (item) => item._id.toString() === req.params.idItem
     );
-
-    console.log(dishIndex);
 
     if (dishIndex === -1) {
       return res.status(404).json({
@@ -560,8 +552,6 @@ exports.updateItemsById = async (req, res, next) => {
     next(error);
   }
 };
-
-const mongoose = require("mongoose");
 
 exports.deleteItemsById = async (req, res, next) => {
   try {
