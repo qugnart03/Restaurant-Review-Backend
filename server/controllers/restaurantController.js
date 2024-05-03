@@ -57,9 +57,14 @@ exports.createRestaurant = async (req, res, next) => {
 //SHOW ALL RESTAURANT
 exports.getAllRestaurant = async (req, res, next) => {
   try {
-    const restaurants = await Restaurant.find();
+    const restaurants = await Restaurant.find()
+      .populate({
+        path: "postedBy",
+        select: "name image",
+      })
+      .exec();
 
-    res.status(201).json({
+    res.status(200).json({
       success: true,
       restaurants,
     });
@@ -71,7 +76,12 @@ exports.getAllRestaurant = async (req, res, next) => {
 //SHOW SINGLE RESTAURANT
 exports.showSingleRestaurant = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.idRestaurant);
+    const restaurant = await Restaurant.findById(req.params.idRestaurant)
+      .populate({
+        path: "postedBy",
+        select: "name image",
+      })
+      .exec();
     res.status(200).json({
       success: true,
       restaurant,

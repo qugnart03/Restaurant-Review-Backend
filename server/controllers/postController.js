@@ -80,10 +80,10 @@ exports.showPost = async (req, res, next) => {
 //SHOW SINGLE POST
 exports.showSinglePost = async (req, res, next) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
-      "comments.postedBy",
-      "name"
-    );
+    const post = await Post.findById(req.params.id).populate({
+      path: "comments.postedBy",
+      select: "name image",
+    });
     res.status(200).json({
       success: true,
       post,
