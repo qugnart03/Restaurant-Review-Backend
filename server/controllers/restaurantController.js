@@ -374,7 +374,12 @@ exports.searchRestaurantByName = async (req, res, next) => {
       filter = { name: { $regex: new RegExp(searchTerm, "i") } };
     }
 
-    const foundRestaurants = await Restaurant.find(filter);
+    const foundRestaurants = await Restaurant.find(filter)
+      .populate({
+        path: "postedBy",
+        select: "name image",
+      })
+      .exec();
 
     res.status(200).json({
       success: true,
@@ -391,13 +396,21 @@ exports.searchRestaurantByType = async (req, res, next) => {
     let restaurants;
 
     if (type === "all") {
-      restaurants = await Restaurant.find().select(
-        "_id name type phone description address postedBy"
-      );
+      restaurants = await Restaurant.find()
+        .select("_id name type phone description address postedBy")
+        .populate({
+          path: "postedBy",
+          select: "name image",
+        })
+        .exec();
     } else {
-      restaurants = await Restaurant.find({ type: type }).select(
-        "_id name type phone description address postedBy"
-      );
+      restaurants = await Restaurant.find({ type: type })
+        .select("_id name type phone description address postedBy")
+        .populate({
+          path: "postedBy",
+          select: "name image",
+        })
+        .exec();
     }
 
     res.status(200).json({ success: true, restaurants: restaurants });
