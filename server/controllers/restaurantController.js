@@ -78,10 +78,17 @@ exports.showSingleRestaurant = async (req, res, next) => {
   try {
     const restaurant = await Restaurant.findById(req.params.idRestaurant)
       .populate({
-        path: "postedBy",
+        path: "comments.postedBy",
         select: "name image",
       })
       .exec();
+
+    if (!restaurant) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Restaurant not found" });
+    }
+
     res.status(200).json({
       success: true,
       restaurant,
