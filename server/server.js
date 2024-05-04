@@ -27,7 +27,7 @@ const userRoutes = require("./routes/userRoute");
 const postRoute = require("./routes/postRoute");
 const restaurantRoute = require("./routes/restaurantRoute");
 const menuRoute = require("./routes/menuRoute");
-
+const vouncherRoute = require("./routes/vouncherRoute");
 //ADMIN
 const adminRoute = require("./routes/adminRoute");
 connectDB();
@@ -81,8 +81,8 @@ app.use(hpp());
 app.use("/api", userRoutes);
 app.use("/api", postRoute);
 app.use("/api", restaurantRoute);
+app.use("/api", vouncherRoute);
 app.use("/api", menuRoute);
-
 app.use("/api", adminRoute);
 
 __dirname = path.resolve();

@@ -197,40 +197,27 @@ exports.updateRestaurant = async (req, res, next) => {
 //ADD COMMENT
 
 exports.addComment = async (req, res, next) => {
-  const { comment } = req.body;
+  const { comment, rating } = req.body;
   try {
-    let image = null;
+    const restaurantId = req.params.id;
 
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "comments",
-        width: 400,
-        crop: "scale",
-      });
-
-      image = {
-        public_id: result.public_id,
-        url: result.secure_url,
-      };
-    }
-
-    const restaurantComment = await Restaurant.findByIdAndUpdate(
-      req.params.id,
+    const updatedRestaurant = await Restaurant.findByIdAndUpdate(
+      restaurantId,
       {
         $push: {
-          comments: { text: comment, image: image, postedBy: req.user._id },
+          comments: { text: comment, rating: rating, postedBy: req.user._id },
         },
       },
       { new: true }
     );
 
-    const restaurant = await Restaurant.findById(restaurantComment._id)
+    const populatedRestaurant = await Restaurant.findById(restaurantId)
       .populate("comments.postedBy", "name email")
       .exec();
 
     res.status(200).json({
       success: true,
-      restaurant,
+      restaurant: populatedRestaurant,
     });
   } catch (error) {
     next(error);
@@ -410,6 +397,40 @@ exports.searchRestaurantByType = async (req, res, next) => {
     }
 
     res.status(200).json({ success: true, restaurants: restaurants });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//RATING
+const calculateAverage = (ratings) => {
+  if (ratings.length === 0) return 0;
+
+  let sum = 0;
+  ratings.forEach((rating) => {
+    sum += rating.rating;
+  });
+  const average = sum / ratings.length;
+  return average;
+};
+
+exports.avgRatingsOfRestaurant = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const restaurant = await Restaurant.findById(id);
+
+    let totalRating = 0;
+    if (restaurant.comments && restaurant.comments.length > 0) {
+      restaurant.comments.forEach((comment) => {
+        totalRating += comment.rating;
+      });
+      const averageRating = totalRating / restaurant.comments.length;
+
+      res.status(200).json({ success: true, averageRating });
+    } else {
+      res.status(200).json({ success: true, averageRating: 0 });
+    }
   } catch (error) {
     next(error);
   }

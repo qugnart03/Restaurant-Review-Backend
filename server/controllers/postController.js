@@ -59,6 +59,7 @@ exports.showPost = async (req, res, next) => {
           image: 1,
           title: 1,
           content: 1,
+          likes: 1,
           "postedBy.name": 1,
           countComment: 1,
           countLike: 1,

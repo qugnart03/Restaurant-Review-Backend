@@ -36,7 +36,6 @@ const restaurantSchema = mongoose.Schema(
     image: {
       url: { type: String, default: null },
       public_id: { type: String, default: null },
-      name: { type: String, default: "" },
     },
     postedBy: {
       type: ObjectId,
@@ -46,6 +45,7 @@ const restaurantSchema = mongoose.Schema(
     comments: [
       {
         text: String,
+        rating: { type: Number, default: 0 },
         image: {
           url: { type: String, default: null },
           public_id: { type: String, default: null },
