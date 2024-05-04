@@ -394,7 +394,7 @@ exports.searchRestaurantByType = async (req, res, next) => {
       restaurants = await Restaurant.find({ type: type })
         .select("_id name type phone description address postedBy")
         .populate({
-          path: "postedBy",
+          path: "postedBy",  
           select: "name image",
         })
         .exec();
