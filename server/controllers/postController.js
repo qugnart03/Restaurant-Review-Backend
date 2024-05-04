@@ -207,7 +207,7 @@ exports.toggleLike = async (req, res, next) => {
   try {
     const postId = req.params.id;
 
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate("postedBy");
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
