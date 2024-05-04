@@ -392,7 +392,7 @@ exports.searchRestaurantByType = async (req, res, next) => {
     } else {
       restaurants = await Restaurant.find({ type: type })
         .populate({
-          path: "postedBy",  
+          path: "postedBy",
           select: "name image",
         })
         .exec();
