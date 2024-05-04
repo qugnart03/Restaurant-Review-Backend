@@ -13,6 +13,7 @@ const {
   searchRestaurantByName,
   searchRestaurantByType,
   avgRatingsOfRestaurant,
+  showSingleRestaurant,
 } = require("../controllers/restaurantController");
 
 const { isAuthenticated, isOwnRestaurant } = require("../middleware/auth");
@@ -21,12 +22,12 @@ const upload = require("../middleware/multer");
 
 // NOT PERMISSION
 router.get("/restaurant/show", isAuthenticated, getAllRestaurant);
-router.put(
-  "/restaurant/comment/:id",
+router.get(
+  "/restaurant/show/:idRestaurant",
   isAuthenticated,
-  upload.single("image"),
-  addComment
+  showSingleRestaurant
 );
+router.put("/restaurant/comment/:id", isAuthenticated, addComment);
 router.put("/restaurant/bookmark/:id", isAuthenticated, toggleBookmark);
 router.get("/search/restaurant/:name", isAuthenticated, searchRestaurantByName);
 router.get(
