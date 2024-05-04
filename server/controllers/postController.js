@@ -42,16 +42,17 @@ exports.showPost = async (req, res, next) => {
       },
       {
         $lookup: {
-          from: "users", // Tên của collection chứa thông tin người dùng
+          from: "users",
           localField: "postedBy",
           foreignField: "_id",
-          as: "postedBy",
+          as: "postedByArray",
         },
       },
       {
         $addFields: {
-          countComment: { $size: "$comments" }, // Đếm số lượng bình luận
-          countLike: { $size: "$likes" }, // Đếm số lượt thích
+          postedBy: { $arrayElemAt: ["$postedByArray", 0] },
+          countComment: { $size: "$comments" },
+          countLike: { $size: "$likes" },
         },
       },
       {
@@ -60,8 +61,7 @@ exports.showPost = async (req, res, next) => {
           title: 1,
           content: 1,
           likes: 1,
-          "postedBy.name": 1,
-          "postedBy.image": 1,
+          postedBy: 1,
           countComment: 1,
           countLike: 1,
           createdAt: 1,
