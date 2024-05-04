@@ -204,7 +204,7 @@ exports.addComment = async (req, res, next) => {
   try {
     const restaurantId = req.params.id;
 
-    const updatedRestaurant = await Restaurant.findByIdAndUpdate(
+    await Restaurant.findByIdAndUpdate(
       restaurantId,
       {
         $push: {
