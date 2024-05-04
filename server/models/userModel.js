@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       required: [true, "Password is required"],
-      minlength: [6, "Password must have at least (6) caracters"],
+      minlength: [6, "Password must have at least (6) characters"],
     },
 
     image: {
@@ -54,6 +54,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    vouchers: [{ type: mongoose.Schema.Types.ObjectId, ref: "Voucher" }],
   },
   { timestamps: true }
 );
