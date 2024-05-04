@@ -384,7 +384,6 @@ exports.searchRestaurantByType = async (req, res, next) => {
 
     if (type === "all") {
       restaurants = await Restaurant.find()
-        .select("_id name type phone description address postedBy")
         .populate({
           path: "postedBy",
           select: "name image",
@@ -392,7 +391,6 @@ exports.searchRestaurantByType = async (req, res, next) => {
         .exec();
     } else {
       restaurants = await Restaurant.find({ type: type })
-        .select("_id name type phone description address postedBy")
         .populate({
           path: "postedBy",  
           select: "name image",
