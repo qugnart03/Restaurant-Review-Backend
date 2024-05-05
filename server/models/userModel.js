@@ -33,11 +33,6 @@ const userSchema = new mongoose.Schema(
       public_id: { type: String, default: null },
     },
 
-    address: {
-      type: String,
-      default: null,
-    },
-
     phone: {
       type: String,
       default: null,

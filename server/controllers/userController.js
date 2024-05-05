@@ -93,23 +93,15 @@ exports.userProfile = async (req, res, next) => {
 
 //UPDATE USER
 exports.updateUser = async (req, res, next) => {
-  console.log("cookies");
-  console.log(req.cookies);
-  console.log("cookies");
   try {
-    const { email, name, address, phone } = req.body;
+    const { email, name, phone } = req.body;
 
     const user = await userModel.findOne(
       { email },
       { email: 1, name: 1, address: 1, phone: 1 }
     );
 
-    if (
-      user.name === name &&
-      user.address === address &&
-      user.phone === phone &&
-      !req.file
-    ) {
+    if (user.name === name && user.phone === phone && !req.file) {
       return res
         .status(200)
         .json({ success: true, message: "User information unchanged", user });
@@ -117,7 +109,6 @@ exports.updateUser = async (req, res, next) => {
 
     const data = {
       name: name || user.name,
-      address: address || user.address,
       phone: phone || user.phone,
     };
 
@@ -169,29 +160,51 @@ exports.loginWithToken = async (req, res, next) => {
   }
 };
 
-exports.sendEmail = async (req, res) => {
+const VerifyUser = require("../models/verifyUser");
+
+exports.sendVerificationEmail = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = req.user;
 
-    url = `http://localhost:8080/api/verify/${user.id}`;
-    sendEmail(user.email, "Verify Email", url);
+    const verificationKey = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
-    res.status(200).send({ message: "Email sent success" });
+    await VerifyUser.create({ userId: user._id, key: verificationKey });
+
+    const emailSubject = "Email Verification";
+    const emailContent = `Your verification code is: ${verificationKey}`;
+    await sendEmail(user.email, emailSubject, emailContent);
+
+    res.status(200).send({ message: "Verification email sent successfully" });
   } catch (error) {
-    res.status(500).send({ message: "Email sent failed" });
+    console.error("Error sending verification email:", error);
+    res.status(500).send({ message: "Failed to send verification email" });
   }
 };
 
-exports.verifiedEmail = async (req, res) => {
+exports.verifyEmail = async (req, res) => {
   try {
-    const user = await User.findOne({ _id: req.params.id });
-    if (!user) return res.status(400).send({ message: "Invalid link" });
+    const { key } = req.body;
 
-    await User.updateOne({ _id: user._id, verified: true });
+    const verifyUser = await VerifyUser.findOne({ userId: req.user._id, key });
 
-    res.status(200).send({ message: "Email verified successfully" });
+    if (!verifyUser) {
+      return res
+        .status(400)
+        .send({ success: false, message: "Invalid verification key" });
+    }
+
+    await User.updateOne({ _id: req.user._id }, { verified: true });
+
+    await VerifyUser.deleteOne({ _id: verifyUser._id });
+
+    res
+      .status(200)
+      .send({ success: true, message: "Email verified successfully" });
   } catch (error) {
-    res.status(500).send({ message: "Internal Server Error" });
+    console.error("Error verifying email:", error);
+    res.status(500).send({ success: false, message: "Internal Server Error" });
   }
 };
 
