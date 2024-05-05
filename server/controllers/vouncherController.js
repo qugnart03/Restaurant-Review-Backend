@@ -50,40 +50,52 @@ const generateVoucherCode = () => {
   return code;
 };
 
-exports.showVoucher = async (req, res, next) => {
+exports.showVoucherWithAdmin = async (req, res, next) => {
   try {
-    if (req.user.role === "user") {
-      const vouchers = await Voucher.find()
-        .populate({
-          path: "restaurant",
-          match: { postedBy: req.user._id },
-          select: "_id name image",
-        })
-        .select("_id code discount content startDate endDate users createdAt")
-        .exec();
-      res.status(200).json({ success: true, data: vouchers });
-    } else {
-      const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
-      if (!restaurant) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Restaurant not found" });
-      }
-
-      const restaurantVouchers = await Voucher.find({
-        restaurant: restaurant._id,
-      })
-        .populate({
-          path: "restaurant",
-          match: { postedBy: req.user._id },
-          select: "_id name image",
-        })
-        .select("_id code discount content startDate endDate users createdAt")
-        .exec();
-
-      res.status(200).json({ success: true, data: restaurantVouchers });
+    if (!restaurant) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Restaurant not found" });
     }
+
+    const restaurantVouchers = await Voucher.find({
+      restaurant: restaurant._id,
+    })
+      .populate({
+        path: "restaurant",
+        match: { postedBy: req.user._id },
+        select: "_id name image",
+      })
+      .select("_id code discount content startDate endDate users createdAt")
+      .exec();
+
+    res.status(200).json({ success: true, data: restaurantVouchers });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.showVoucherOfRestaurant = async (req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.idRes);
+
+    if (!restaurant) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Restaurant not found" });
+    }
+
+    const vouchers = await Voucher.find({ restaurant: req.params.idRes })
+      .populate({
+        path: "restaurant",
+        match: { postedBy: req.user._id },
+        select: "_id name image",
+      })
+      .select("_id code discount content startDate endDate users createdAt")
+      .exec();
+    res.status(200).json({ success: true, data: vouchers });
   } catch (error) {
     next(error);
   }
