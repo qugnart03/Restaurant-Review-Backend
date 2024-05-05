@@ -7,8 +7,8 @@ const {
   userProfile,
   loginWithToken,
   updateUser,
-  sendEmail,
-  verifiedEmail,
+  sendVerificationEmail,
+  verifyEmail,
   searchUserByName,
 } = require("../controllers/userController");
 const { isAuthenticated } = require("../middleware/auth");
@@ -39,10 +39,10 @@ router.post(
 router.post("/login-with-token", loginWithToken);
 
 // Verify email
-router.get("/verify/:id", verifiedEmail);
+router.put("/verify", isAuthenticated, verifyEmail);
 
 // Send email verified
-router.get("/sendVerification", isAuthenticated, sendEmail);
+router.put("/sendVerification", isAuthenticated, sendVerificationEmail);
 
 router.get("/search/user/:name", isAuthenticated, searchUserByName);
 
