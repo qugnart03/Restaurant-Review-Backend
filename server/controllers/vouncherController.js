@@ -63,8 +63,16 @@ exports.showVoucher = async (req, res, next) => {
         .exec();
       res.status(200).json({ success: true, data: vouchers });
     } else {
+      const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+
+      if (!restaurant) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Restaurant not found" });
+      }
+
       const restaurantVouchers = await Voucher.find({
-        restaurant: req.user._id,
+        restaurant: restaurant._id,
       })
         .populate({
           path: "restaurant",
