@@ -60,8 +60,7 @@ const sendTokenResponse = async (user, codeStatus, res) => {
 
     res.status(codeStatus).cookie("token", token, options).json({
       success: true,
-      id: user._id,
-      role: user.role,
+      user,
     });
   } catch (error) {
     next(error);
@@ -170,10 +169,18 @@ exports.sendVerificationEmail = async (req, res) => {
       100000 + Math.random() * 900000
     ).toString();
 
-    await VerifyUser.create({ userId: user._id, key: verificationKey });
+    const existingUser = await VerifyUser.findOne({ userId: user._id });
+
+    if (!existingUser) {
+      const verifyUser = new VerifyUser({ userId: user._id, verificationKey });
+      await verifyUser.save();
+    } else {
+      existingUser.verificationKey = verificationKey;
+      await existingUser.save();
+    }
 
     const emailSubject = "Email Verification";
-    const emailContent = `Your verification code is: ${verificationKey}`;
+    const emailContent = `Your verification code is: ${verificationKey}`; // Corrected line
     await sendEmail(user.email, emailSubject, emailContent);
 
     res.status(200).send({ message: "Verification email sent successfully" });
@@ -196,8 +203,6 @@ exports.verifyEmail = async (req, res) => {
     }
 
     await User.updateOne({ _id: req.user._id }, { verified: true });
-
-    await VerifyUser.deleteOne({ _id: verifyUser._id });
 
     res
       .status(200)
