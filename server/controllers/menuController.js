@@ -7,8 +7,6 @@ exports.addMenuItem = async (req, res, next) => {
   try {
     const { typeDish, nameDish, priceDish } = req.body;
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
-
-    console.log(typeDish, nameDish, priceDish);
     let existingMenu = await Menu.findOne({ restaurant: restaurant._id });
 
     if (!existingMenu) {
@@ -23,7 +21,6 @@ exports.addMenuItem = async (req, res, next) => {
       width: 400,
       crop: "scale",
     });
-
     const newMenuItem = {
       typeDish,
       nameDish,
