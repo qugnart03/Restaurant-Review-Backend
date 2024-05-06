@@ -222,7 +222,7 @@ exports.addComment = async (req, res, next) => {
     );
 
     const populatedRestaurant = await Restaurant.findById(restaurantId)
-      .populate("comments.postedBy", "name email")
+      .populate("comments.postedBy", "name email image")
       .exec();
 
     res.status(200).json({
