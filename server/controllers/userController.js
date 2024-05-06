@@ -60,8 +60,7 @@ const sendTokenResponse = async (user, codeStatus, res) => {
 
     res.status(codeStatus).cookie("token", token, options).json({
       success: true,
-      id: user._id,
-      role: user.role,
+      user,
     });
   } catch (error) {
     next(error);
@@ -181,19 +180,19 @@ exports.sendVerificationEmail = async (req, res) => {
     const verificationKey = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
-    // Check if a document with this userId already exists
+
     const existingUser = await VerifyUser.findOne({ userId: user._id });
-    // If not, create a new document
+
     if (!existingUser) {
       const verifyUser = new VerifyUser({ userId: user._id, verificationKey });
       await verifyUser.save();
     } else {
-      // If a document with this userId already exists, update it
       existingUser.verificationKey = verificationKey;
       await existingUser.save();
     }
+
     const emailSubject = "Email Verification";
-    const emailContent = `Your verification code is: ${verificationKey}`;
+    const emailContent = `Your verification code is: ${verificationKey}`; // Corrected line
     await sendEmail(user.email, emailSubject, emailContent);
     res.status(200).send({ message: "Verification email sent successfully" });
   } catch (error) {
@@ -215,8 +214,6 @@ exports.verifyEmail = async (req, res) => {
     }
 
     await User.updateOne({ _id: req.user._id }, { verified: true });
-
-    await VerifyUser.deleteOne({ _id: verifyUser._id });
 
     res
       .status(200)
