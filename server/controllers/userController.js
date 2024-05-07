@@ -161,20 +161,6 @@ exports.loginWithToken = async (req, res, next) => {
 const VerifyUser = require("../models/verifyUser");
 
 exports.sendVerificationEmail = async (req, res) => {
-  // try {
-  //   const user = req.user;
-  //   const verificationKey = Math.floor(
-  //     100000 + Math.random() * 900000
-  //   ).toString();
-  //   await VerifyUser.create({ userId: user._id, key: verificationKey });
-  //   const emailSubject = "Email Verification";
-  //   const emailContent = `Your verification code is: ${verificationKey}`;
-  //   await sendEmail(user.email, emailSubject, emailContent);
-  //   res.status(200).send({ message: "Verification email sent successfully" });
-  // } catch (error) {
-  //   console.error("Error sending verification email:", error);
-  //   res.status(500).send({ message: "Failed to send verification email" });
-  // }
   try {
     const user = req.user;
     const verificationKey = Math.floor(
