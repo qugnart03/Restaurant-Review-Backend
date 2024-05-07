@@ -3,6 +3,7 @@ const User = require("../models/userModel");
 const ErrorResponse = require("../utils/errorResponse");
 const cloudinary = require("../utils/cloudinary");
 const sendEmail = require("../utils/sendEmail");
+const VerifyUser = require("../models/verifyUser");
 
 //SIGN UP
 exports.signup = async (req, res, next) => {
@@ -93,42 +94,45 @@ exports.userProfile = async (req, res, next) => {
 //UPDATE USER
 exports.updateUser = async (req, res, next) => {
   try {
-    const { email, name, phone } = req.body;
+    const { name, phone } = req.body;
 
-    const user = await userModel.findOne(
-      { email },
-      { email: 1, name: 1, address: 1, phone: 1 }
-    );
+    const user = await userModel.findById(req.user._id).select("name phone");
 
-    if (user.name === name && user.phone === phone && !req.file) {
+    if (!user) {
       return res
-        .status(200)
-        .json({ success: true, message: "User information unchanged", user });
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
-    const data = {
-      name: name || user.name,
-      phone: phone || user.phone,
-    };
+    const newData = {};
+
+    if (name && user.name !== name) {
+      newData.name = name;
+    }
+    if (phone && user.phone !== phone) {
+      newData.phone = phone;
+    }
 
     if (req.file) {
-      if (user.image && user.image.public_id) {
-        await cloudinary.uploader.destroy(user.image.public_id);
-      }
-
       const newImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "avatars",
         width: 200,
         crop: "scale",
       });
 
-      data.image = {
+      newData.image = {
         public_id: newImage.public_id,
         url: newImage.secure_url,
       };
     }
 
-    const userUpdate = await userModel.findByIdAndUpdate(user._id, data, {
+    if (Object.keys(newData).length === 0) {
+      return res
+        .status(200)
+        .json({ success: true, message: "User information unchanged", user });
+    }
+
+    const userUpdate = await userModel.findByIdAndUpdate(user._id, newData, {
       new: true,
     });
 
@@ -158,8 +162,6 @@ exports.loginWithToken = async (req, res, next) => {
   }
 };
 
-const VerifyUser = require("../models/verifyUser");
-
 exports.sendVerificationEmail = async (req, res) => {
   try {
     const user = req.user;
@@ -170,15 +172,14 @@ exports.sendVerificationEmail = async (req, res) => {
     const existingUser = await VerifyUser.findOne({ userId: user._id });
 
     if (!existingUser) {
-      const verifyUser = new VerifyUser({ userId: user._id, verificationKey });
-      await verifyUser.save();
+      await VerifyUser.create({ userId: user._id, key: verificationKey });
     } else {
-      existingUser.verificationKey = verificationKey;
+      existingUser.key = verificationKey;
       await existingUser.save();
     }
 
     const emailSubject = "Email Verification";
-    const emailContent = `Your verification code is: ${verificationKey}`; // Corrected line
+    const emailContent = `Your verification code is: ${verificationKey}`;
     await sendEmail(user.email, emailSubject, emailContent);
     res.status(200).send({ message: "Verification email sent successfully" });
   } catch (error) {

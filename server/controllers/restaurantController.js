@@ -3,6 +3,8 @@ const ErrorResponse = require("../utils/errorResponse");
 const main = require("../server");
 const Restaurant = require("../models/restaurantModel");
 const User = require("../models/userModel");
+const AccessToken =
+  "pk.eyJ1IjoibWFpaHV5bWFwMTIzIiwiYSI6ImNsdmR0ZTloazAybDcyaXBweGp0ZmQ0eDYifQ.Umosc-ZzdKZOI6CKCCs8rA";
 
 //CREATE RESTAURANT
 exports.createRestaurant = async (req, res, next) => {
@@ -27,7 +29,7 @@ exports.createRestaurant = async (req, res, next) => {
 
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "restaurants",
-      width: 1200,
+      width: 400,
       crop: "scale",
     });
 
@@ -127,8 +129,6 @@ exports.deleteRestaurant = async (req, res, next) => {
     next(error);
   }
 };
-const AccessToken =
-  "pk.eyJ1IjoibWFpaHV5bWFwMTIzIiwiYSI6ImNsdmR0ZTloazAybDcyaXBweGp0ZmQ0eDYifQ.Umosc-ZzdKZOI6CKCCs8rA";
 
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
@@ -153,8 +153,10 @@ exports.updateRestaurant = async (req, res, next) => {
       postedBy: req.user._id,
     });
 
-    const startTime = timeWork ? timeWork.start : undefined;
-    const endTime = timeWork ? timeWork.end : undefined;
+    console.log(currentRestaurant);
+
+    const startTime = timeWork ? timeWork.split("-")[0] : undefined;
+    const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
     const data = {
       name: name || currentRestaurant.name,
@@ -172,11 +174,6 @@ exports.updateRestaurant = async (req, res, next) => {
     };
 
     if (image !== null && image !== "") {
-      const ImgId = currentRestaurant.image.public_id;
-      if (ImgId) {
-        await cloudinary.uploader.destroy(ImgId);
-      }
-
       const newImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "restaurants",
         width: 1200,
@@ -305,7 +302,7 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 
     const bookmarkedRestaurants = user.bookmarks;
 
-    res.status(200).json({ success: true, bookmarks: bookmarkedRestaurants });
+    res.status(200).json({ success: true, bookmarkedRestaurants });
   } catch (error) {
     next(error);
   }
