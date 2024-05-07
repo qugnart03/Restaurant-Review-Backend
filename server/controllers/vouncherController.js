@@ -50,7 +50,7 @@ const generateVoucherCode = () => {
   return code;
 };
 
-exports.showVoucherWithAdmin = async (req, res, next) => {
+exports.showVoucherWithRestaurant = async (req, res, next) => {
   try {
     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
@@ -68,7 +68,6 @@ exports.showVoucherWithAdmin = async (req, res, next) => {
         match: { postedBy: req.user._id },
         select: "_id name image",
       })
-      .select("_id code discount content startDate endDate users createdAt")
       .exec();
 
     res.status(200).json({ success: true, data: restaurantVouchers });

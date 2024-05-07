@@ -34,10 +34,14 @@ exports.addMenuItem = async (req, res, next) => {
     existingMenu.items.push(newMenuItem);
     await existingMenu.save();
 
+    // Trả về phản hồi với _id của mục đã thêm vào menu
     res.status(201).json({
       success: true,
       message: "Item added to menu",
-      menuItem: newMenuItem,
+      menuItem: {
+        _id: existingMenu.items[existingMenu.items.length - 1]._id, // Lấy _id của mục cuối cùng trong mảng
+        ...newMenuItem,
+      },
     });
   } catch (error) {
     next(error);

@@ -73,5 +73,5 @@ router.get(
   showBookmarkedRestaurants
 );
 
-router.get("/restaurant/rating/avg/:id", avgRatingsOfRestaurant);
+router.get("/restaurant/rating/avg", isAuthenticated, avgRatingsOfRestaurant);
 module.exports = router;

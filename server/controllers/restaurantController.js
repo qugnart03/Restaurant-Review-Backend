@@ -306,9 +306,15 @@ exports.showBookmarkedRestaurants = async (req, res, next) => {
 };
 
 exports.showRestaurantWithAdmin = async (req, res, next) => {
-  console.log(req.user._id);
   try {
-    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+    const restaurant = await Restaurant.findOne({
+      postedBy: req.user._id,
+    })
+      .populate({
+        path: "comments.postedBy",
+        select: "name image",
+      })
+      .exec();
 
     if (!restaurant) {
       return res.status(404).json({
@@ -405,22 +411,10 @@ exports.searchRestaurantByType = async (req, res, next) => {
 };
 
 //RATING
-const calculateAverage = (ratings) => {
-  if (ratings.length === 0) return 0;
-
-  let sum = 0;
-  ratings.forEach((rating) => {
-    sum += rating.rating;
-  });
-  const average = sum / ratings.length;
-  return average;
-};
 
 exports.avgRatingsOfRestaurant = async (req, res, next) => {
   try {
-    const { id } = req.params;
-
-    const restaurant = await Restaurant.findById(id);
+    const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
 
     let totalRating = 0;
     if (restaurant.comments && restaurant.comments.length > 0) {
