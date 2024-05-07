@@ -34,7 +34,7 @@ router.get("/menu/search/dish/:name", isAuthenticated, searchDishByName);
 router.post(
   "/menu/create",
   isAuthenticated,
-  isOwnRestaurant,
+
   upload.single("image"),
   addMenuItem
 );

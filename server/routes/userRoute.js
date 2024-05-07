@@ -10,6 +10,9 @@ const {
   sendVerificationEmail,
   verifyEmail,
   searchUserByName,
+  sendForgotPassword,
+  verifyPassword,
+  updatePassword,
 } = require("../controllers/userController");
 const { isAuthenticated } = require("../middleware/auth");
 
@@ -43,7 +46,9 @@ router.put("/verify", isAuthenticated, verifyEmail);
 
 // Send email verified
 router.put("/sendVerification", isAuthenticated, sendVerificationEmail);
-
 router.get("/search/user/:name", isAuthenticated, searchUserByName);
 
+router.put("/sendForgotPassword", sendForgotPassword);
+router.put("/verifyPassword", verifyPassword);
+router.put("/updatePassword", updatePassword);
 module.exports = router;

@@ -242,3 +242,88 @@ exports.searchUserByName = async (req, res, next) => {
     next(error);
   }
 };
+
+const ForgotPassword = require("../models/forgotPasswordModel");
+
+exports.sendForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const existingUser = await User.findOne({ email });
+
+    if (!existingUser) {
+      return res.status(404).send({ message: "Email not found" });
+    }
+
+    const verificationKey = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    let forgotPwdEntry = await ForgotPassword.findOne({ email });
+
+    if (!forgotPwdEntry) {
+      forgotPwdEntry = await ForgotPassword.create({
+        email,
+        key: verificationKey,
+      });
+    } else {
+      forgotPwdEntry.key = verificationKey;
+      await forgotPwdEntry.save();
+    }
+
+    const emailSubject = "Reset Password Verification";
+    const emailContent = `Your verification code for resetting password is: ${verificationKey}`;
+    await sendEmail(email, emailSubject, emailContent);
+
+    res.status(200).send({ message: "Verification email sent successfully" });
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    res.status(500).send({ message: "Failed to send verification email" });
+  }
+};
+
+exports.verifyPassword = async (req, res) => {
+  try {
+    const { email, key } = req.body;
+
+    const forgotPwdEntry = await ForgotPassword.findOne({ email, key });
+
+    if (!forgotPwdEntry) {
+      return res.status(200).send({ success: false });
+    }
+
+    res.status(200).send({ success: true });
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    res.status(500).send({ success: false, message: "Internal Server Error" });
+  }
+};
+
+exports.updatePassword = async (req, res) => {
+  try {
+    const { email, newPassword, reNewPassword } = req.body;
+
+    if (newPassword !== reNewPassword) {
+      return res
+        .status(400)
+        .json({ success: false, message: "New passwords do not match" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ success: true, message: "Password updated successfully" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
