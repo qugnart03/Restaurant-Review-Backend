@@ -431,3 +431,24 @@ exports.avgRatingsOfRestaurant = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.avgRatingsOfRestaurantById = async (req, res, next) => {
+  try {
+    const { id } = req.body;
+    const restaurant = await Restaurant.findById(id);
+
+    let totalRating = 0;
+    if (restaurant.comments && restaurant.comments.length > 0) {
+      restaurant.comments.forEach((comment) => {
+        totalRating += comment.rating;
+      });
+      const averageRating = totalRating / restaurant.comments.length;
+
+      res.status(200).json({ success: true, averageRating });
+    } else {
+      res.status(200).json({ success: true, averageRating: 0 });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
