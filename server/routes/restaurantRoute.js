@@ -81,4 +81,10 @@ router.post(
 );
 
 router.get("/restaurant/rating/avg", isAuthenticated, avgRatingsOfRestaurant);
+
+router.get(
+  "/restaurant/rating/avg/:id",
+  isAuthenticated,
+  avgRatingsOfRestaurantById
+);
 module.exports = router;
