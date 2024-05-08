@@ -5,6 +5,7 @@ const Restaurant = require("../models/restaurantModel");
 const User = require("../models/userModel");
 const Voucher = require("../models/vouncherModel");
 const moment = require("moment");
+const Notification = require("../models/notificationModel");
 
 exports.createVoucher = async (req, res, next) => {
   try {
@@ -32,6 +33,14 @@ exports.createVoucher = async (req, res, next) => {
     });
 
     await newVoucher.save();
+
+    const newNotification = new Notification({
+      message: `${restaurant.name} added a voucher for up to ${discount}% off from ${startDate} to ${endDate}`,
+      type: "voucher",
+      restaurant: restaurant._id,
+      vouncher: newVoucher._id,
+    });
+    await newNotification.save();
 
     res.status(201).json({ success: true, data: newVoucher });
   } catch (error) {
