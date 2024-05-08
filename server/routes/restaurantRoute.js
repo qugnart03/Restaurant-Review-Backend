@@ -14,6 +14,7 @@ const {
   searchRestaurantByType,
   avgRatingsOfRestaurant,
   showSingleRestaurant,
+  avgRatingsOfRestaurantById,
 } = require("../controllers/restaurantController");
 
 const { isAuthenticated, isOwnRestaurant } = require("../middleware/auth");
@@ -74,4 +75,10 @@ router.get(
 );
 
 router.get("/restaurant/rating/avg", isAuthenticated, avgRatingsOfRestaurant);
+
+router.get(
+  "/restaurant/rating/avg/:id",
+  isAuthenticated,
+  avgRatingsOfRestaurantById
+);
 module.exports = router;

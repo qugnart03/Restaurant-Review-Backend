@@ -2,10 +2,11 @@ const cloudinary = require("../utils/cloudinary");
 const Post = require("../models/postModel");
 const ErrorResponse = require("../utils/errorResponse");
 const main = require("../server");
+const User = require("../models/userModel");
 
 //CREATE POST
 exports.createPost = async (req, res, next) => {
-  const { title, content, postedBy, image, likes, comments } = req.body;
+  const { title, content } = req.body;
 
   try {
     //UPLOAD IMAGE IN CLOUDINARY
@@ -14,6 +15,9 @@ exports.createPost = async (req, res, next) => {
       width: 1200,
       crop: "scale",
     });
+
+    const user = await User.findById(req.user._id);
+
     const post = await Post.create({
       title,
       content,
@@ -23,9 +27,36 @@ exports.createPost = async (req, res, next) => {
         url: result.secure_url,
       },
     });
+
     res.status(201).json({
-      success: true,
-      post,
+      _id: post._id,
+      title: post.title,
+      content: post.content,
+      postedBy: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        image: user.image,
+        address: user.address,
+        phone: user.phone,
+        role: user.role,
+        bookmarks: user.bookmarks,
+        verified: user.verified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        __v: user.__v,
+        vouchers: user.vouchers,
+      },
+      image: {
+        url: result.secure_url,
+        public_id: result.public_id,
+      },
+      likes: post.likes,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      countComment: post.comments.length,
+      countLike: post.likes.length,
     });
   } catch (error) {
     console.log(error);
@@ -79,6 +110,21 @@ exports.showPost = async (req, res, next) => {
   }
 };
 
+exports.showMyPost = async (req, res, next) => {
+  try {
+    const posts = await Post.find({ postedBy: req.user._id })
+      .populate(
+        "postedBy",
+        "_id name email password image address phone role bookmarks verified createdAt updatedAt __v vouchers"
+      )
+      .select("_id title content image likes createdAt updatedAt comments");
+
+    res.status(200).json(posts);
+  } catch (error) {
+    next(error);
+  }
+};
+
 //SHOW SINGLE POST
 exports.showSinglePost = async (req, res, next) => {
   try {
@@ -97,16 +143,17 @@ exports.showSinglePost = async (req, res, next) => {
 
 //DELETE POST
 exports.deletePost = async (req, res, next) => {
-  const currentPost = await Post.findById(req.params.id);
-
-  //DELETE POST IMAGE IN CLOUDINARY
-  const ImgId = currentPost.image.public_id;
-  if (ImgId) {
-    await cloudinary.uploader.destroy(ImgId);
-  }
-
   try {
-    const post = await Post.findByIdAndRemove(req.params.id);
+    const currentPost = await Post.findById(req.params.id);
+
+    //DELETE POST IMAGE IN CLOUDINARY
+    const ImgId = currentPost.image.public_id;
+    if (ImgId) {
+      await cloudinary.uploader.destroy(ImgId);
+    }
+
+    await currentPost.deleteOne();
+
     res.status(200).json({
       success: true,
       message: "post deleted",
@@ -122,39 +169,61 @@ exports.updatePost = async (req, res, next) => {
     const { title, content, image } = req.body;
     const currentPost = await Post.findById(req.params.id);
 
-    //BUILD THE OBJECT DATA
-    const data = {
-      title: title || currentPost.title,
-      content: content || currentPost.content,
-      image: image || currentPost.image,
-    };
-
     //MODIFY POST IMAGE CONDITIONALLY
     if (req.body.image !== "") {
-      const ImgId = currentPost.image.public_id;
-      if (ImgId) {
-        await cloudinary.uploader.destroy(ImgId);
-      }
-
-      const newImage = await cloudinary.uploader.upload(req.body.image, {
+      const newImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "posts",
         width: 1200,
         crop: "scale",
       });
 
-      data.image = {
+      updatedImage = {
         public_id: newImage.public_id,
         url: newImage.secure_url,
       };
     }
 
-    const postUpdate = await Post.findByIdAndUpdate(req.params.id, data, {
-      new: true,
-    });
+    const postUpdate = await Post.findByIdAndUpdate(
+      req.params.id,
+      {
+        title: title || currentPost.title,
+        content: content || currentPost.content,
+        image: updatedImage,
+      },
+      { new: true }
+    );
+
+    const user = await User.findById(postUpdate.postedBy);
 
     res.status(200).json({
-      success: true,
-      postUpdate,
+      _id: postUpdate._id,
+      title: postUpdate.title,
+      content: postUpdate.content,
+      postedBy: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        image: user.image,
+        address: user.address,
+        phone: user.phone,
+        role: user.role,
+        bookmarks: user.bookmarks,
+        verified: user.verified,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        __v: user.__v,
+        vouchers: user.vouchers,
+      },
+      image: {
+        url: updatedImage.url,
+        public_id: updatedImage.public_id,
+      },
+      likes: postUpdate.likes,
+      createdAt: postUpdate.createdAt,
+      updatedAt: postUpdate.updatedAt,
+      countComment: postUpdate.comments.length,
+      countLike: postUpdate.likes.length,
     });
   } catch (error) {
     next(error);
