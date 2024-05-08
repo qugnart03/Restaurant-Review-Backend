@@ -14,6 +14,7 @@ const {
   searchRestaurantByType,
   avgRatingsOfRestaurant,
   showSingleRestaurant,
+  avgRatingsOfRestaurantById,
 } = require("../controllers/restaurantController");
 
 const { isAuthenticated, isOwnRestaurant } = require("../middleware/auth");
@@ -71,6 +72,12 @@ router.get(
   "/restaurant/bookmarked/show",
   isAuthenticated,
   showBookmarkedRestaurants
+);
+
+router.post(
+  "/restaurant/rating/avg",
+  isAuthenticated,
+  avgRatingsOfRestaurantById
 );
 
 router.get("/restaurant/rating/avg", isAuthenticated, avgRatingsOfRestaurant);

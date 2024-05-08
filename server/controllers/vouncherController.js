@@ -33,7 +33,11 @@ exports.createVoucher = async (req, res, next) => {
 
     await newVoucher.save();
 
-    res.status(201).json({ success: true, data: newVoucher });
+    const voucherWithRestaurant = await Voucher.findById(
+      newVoucher._id
+    ).populate("restaurant", "_id name image");
+
+    res.status(201).json({ success: true, data: voucherWithRestaurant });
   } catch (error) {
     next(error);
   }
@@ -126,8 +130,12 @@ exports.updateVoucherById = async (req, res, next) => {
     }
 
     await voucher.save();
+    const voucherWithRestaurant = await Voucher.findById(voucher._id).populate(
+      "restaurant",
+      "_id name image"
+    );
 
-    res.status(200).json({ success: true, data: voucher });
+    res.status(200).json({ success: true, data: voucherWithRestaurant });
   } catch (error) {
     next(error);
   }

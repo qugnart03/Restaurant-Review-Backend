@@ -92,6 +92,7 @@ exports.showSingleRestaurant = async (req, res, next) => {
         .status(404)
         .json({ success: false, error: "Restaurant not found" });
     }
+    console.log(restaurant);
 
     res.status(200).json({
       success: true,
