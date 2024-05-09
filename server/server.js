@@ -28,6 +28,7 @@ const postRoute = require("./routes/postRoute");
 const restaurantRoute = require("./routes/restaurantRoute");
 const menuRoute = require("./routes/menuRoute");
 const vouncherRoute = require("./routes/vouncherRoute");
+const notificationRoute = require("./routes/notificationRoute");
 //ADMIN
 const adminRoute = require("./routes/adminRoute");
 connectDB();
@@ -84,7 +85,7 @@ app.use("/api", restaurantRoute);
 app.use("/api", vouncherRoute);
 app.use("/api", menuRoute);
 app.use("/api", adminRoute);
-
+app.use("/api", notificationRoute);
 __dirname = path.resolve();
 
 if (process.env.NODE_ENV === "production") {

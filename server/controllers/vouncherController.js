@@ -5,14 +5,55 @@ const Restaurant = require("../models/restaurantModel");
 const User = require("../models/userModel");
 const Voucher = require("../models/vouncherModel");
 const moment = require("moment");
+const Notification = require("../models/notificationModel");
+
+// exports.createVoucher = async (req, res, next) => {
+//   try {
+//     const { discount, content, startDate, endDate } = req.body;
+
+//     const restaurant = await Restaurant.findOne({
+//       postedBy: req.user._id,
+//     });
+//     if (!restaurant) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Restaurant not found" });
+//     }
+
+//     const startDateObj = moment(startDate, "YYYY-MM-DD").toDate();
+//     const endDateObj = moment(endDate, "YYYY-MM-DD").toDate();
+
+//     const newVoucher = new Voucher({
+//       code: generateVoucherCode(),
+//       discount: discount,
+//       content: content,
+//       restaurant: restaurant._id,
+//       startDate: startDateObj,
+//       endDate: endDateObj,
+//     });
+
+//     await newVoucher.save();
+
+//     const newNotification = new Notification({
+//       message: `${restaurant.name} added a voucher for up to ${discount}% off from ${startDate} to ${endDate}`,
+//       type: "voucher",
+//       restaurant: restaurant._id,
+//       vouncher: newVoucher._id,
+//     });
+//     await newNotification.save();
+
+//     res.status(201).json({ success: true, data: newVoucher });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 exports.createVoucher = async (req, res, next) => {
   try {
     const { discount, content, startDate, endDate } = req.body;
+    const { _id: userId } = req.user;
 
-    const restaurant = await Restaurant.findOne({
-      postedBy: req.user._id,
-    });
+    const restaurant = await Restaurant.findOne({ postedBy: userId });
     if (!restaurant) {
       return res
         .status(404)
@@ -24,20 +65,32 @@ exports.createVoucher = async (req, res, next) => {
 
     const newVoucher = new Voucher({
       code: generateVoucherCode(),
-      discount: discount,
-      content: content,
+      discount,
+      content,
       restaurant: restaurant._id,
       startDate: startDateObj,
       endDate: endDateObj,
     });
 
-    await newVoucher.save();
+    const newNotification = new Notification({
+      message: `${restaurant.name} added a voucher for up to ${discount}% off from ${startDate} to ${endDate}`,
+      type: "voucher",
+      restaurant: restaurant._id,
+      vouncher: newVoucher._id,
+    });
 
-    const voucherWithRestaurant = await Voucher.findById(
-      newVoucher._id
-    ).populate("restaurant", "_id name image");
+    const [savedVoucher, savedNotification] = await Promise.all([
+      newVoucher.save(),
+      newNotification.save(),
+    ]);
 
-    res.status(201).json({ success: true, data: voucherWithRestaurant });
+    const populatedVoucher = await Voucher.findById(savedVoucher._id).populate({
+      path: "restaurant",
+      match: { postedBy: userId },
+      select: "_id name image",
+    });
+
+    res.status(201).json({ success: true, data: populatedVoucher });
   } catch (error) {
     next(error);
   }

@@ -237,7 +237,7 @@ exports.addComment = async (req, res, next) => {
     );
     const post = await Post.findById(postComment._id).populate(
       "comments.postedBy",
-      "name email"
+      "name image email"
     );
     res.status(200).json({
       success: true,

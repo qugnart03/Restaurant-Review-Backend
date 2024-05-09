@@ -1,4 +1,5 @@
 const Menu = require("../models/menuModel");
+const Notification = require("../models/notificationModel");
 const Restaurant = require("../models/restaurantModel");
 const cloudinary = require("../utils/cloudinary");
 
@@ -34,12 +35,19 @@ exports.addMenuItem = async (req, res, next) => {
     existingMenu.items.push(newMenuItem);
     await existingMenu.save();
 
-    // Trả về phản hồi với _id của mục đã thêm vào menu
+    const newNotification = new Notification({
+      message: `${restaurant.name} added a new dish to my menu:  ${nameDish}`,
+      type: "menu",
+      restaurant: restaurant._id,
+      menu: existingMenu.items[existingMenu.items.length - 1]._id,
+    });
+    await newNotification.save();
+
     res.status(201).json({
       success: true,
       message: "Item added to menu",
       menuItem: {
-        _id: existingMenu.items[existingMenu.items.length - 1]._id, // Lấy _id của mục cuối cùng trong mảng
+        _id: existingMenu.items[existingMenu.items.length - 1]._id,
         ...newMenuItem,
       },
     });
@@ -47,6 +55,62 @@ exports.addMenuItem = async (req, res, next) => {
     next(error);
   }
 };
+
+// exports.addMenuItem = async (req, res) => {
+//   try {
+//     const { typeDish, nameDish, priceDish } = req.body;
+//     const restaurant = await Restaurant.findOne({ postedBy: req.user._id });
+
+//     let existingMenu = await Menu.findOneAndUpdate(
+//       { restaurant: restaurant._id },
+//       {
+//         $push: {
+//           items: {
+//             typeDish,
+//             nameDish,
+//             priceDish,
+//             image: {
+//               public_id: result.public_id,
+//               url: result.secure_url,
+//             },
+//           },
+//         },
+//       },
+//       { new: true, upsert: true }
+//     );
+
+//     if (!existingMenu) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Menu not found" });
+//     }
+
+//     const result = await cloudinary.uploader.upload(req.file.path, {
+//       folder: "restaurants",
+//       width: 400,
+//       crop: "scale",
+//     });
+
+//     const newNotification = new Notification({
+//       message: `${restaurant.name} added a new dish to my menu:  ${nameDish}`,
+//       type: "menu",
+//       restaurant: restaurant._id,
+//       menu: existingMenu.items[existingMenu.items.length - 1]._id,
+//     });
+//     await newNotification.save();
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Item added to menu",
+//       menuItem: {
+//         _id: existingMenu.items[existingMenu.items.length - 1]._id,
+//         ...newMenuItem,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 
 // SHOW ALL MENU
 exports.showAllMenuItem = async (req, res, next) => {
