@@ -27,7 +27,7 @@ exports.createVoucher = async (req, res, next) => {
       code: generateVoucherCode(),
       discount: discount,
       content: content,
-      restaurant: restaurant._id,
+      restaurant: restaurant,
       startDate: startDateObj,
       endDate: endDateObj,
     });
@@ -206,5 +206,22 @@ exports.toggleVoucher = async (req, res, next) => {
     }
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.showUserVouchers = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    const userVouchers = await Voucher.find({ users: userId })
+      .populate({
+        path: "restaurant",
+        select: "name image",
+      })
+      .exec();
+
+    res.status(200).json({ success: true, vouchers: userVouchers });
+  } catch (error) {
+    next(error);
   }
 };

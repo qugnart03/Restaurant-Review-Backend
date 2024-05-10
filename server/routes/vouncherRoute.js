@@ -6,6 +6,7 @@ const {
   deleteVoucherById,
   toggleVoucher,
   showVoucherOfRestaurant,
+  showUserVouchers,
   showVoucherWithRestaurant,
 } = require("../controllers/vouncherController");
 
@@ -26,4 +27,6 @@ router.get(
   isAuthenticated,
   showVoucherWithRestaurant
 );
+
+router.get("/me/vouncher/show", isAuthenticated, showUserVouchers);
 module.exports = router;
