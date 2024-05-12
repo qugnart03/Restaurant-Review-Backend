@@ -260,14 +260,14 @@ exports.toggleBookmark = async (req, res, next) => {
       restaurant.bookmarked = false;
 
       req.user.bookmarks = req.user.bookmarks.filter(
-        (restaurantId) => restaurantId.toString() !== restaurantId.toString()
+        (id) => id.toString() !== restaurantId.toString()
       );
       await req.user.save();
     }
 
     await restaurant.save();
 
-    res.status(200).json({ success: true, restaurant });
+    res.status(200).json({ success: true, check: restaurant.bookmarked });
   } catch (error) {
     next(error);
   }

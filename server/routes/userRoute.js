@@ -13,6 +13,7 @@ const {
   sendForgotPassword,
   verifyPassword,
   updatePassword,
+  getChatBotResponse
 } = require("../controllers/userController");
 const { isAuthenticated } = require("../middleware/auth");
 
@@ -49,6 +50,7 @@ router.put("/sendVerification", isAuthenticated, sendVerificationEmail);
 router.get("/search/user/:name", isAuthenticated, searchUserByName);
 
 router.put("/sendForgotPassword", sendForgotPassword);
+router.post("/message", isAuthenticated, getChatBotResponse);
 router.put("/verifyPassword", verifyPassword);
 router.put("/updatePassword", updatePassword);
 module.exports = router;

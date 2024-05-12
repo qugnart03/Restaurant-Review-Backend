@@ -272,7 +272,7 @@ exports.toggleLike = async (req, res, next) => {
 
     await post.save();
 
-    res.status(200).json({ success: true, post });
+    res.status(200).json({ success: true, check: post.liked });
   } catch (error) {
     next(error);
   }

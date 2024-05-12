@@ -4,7 +4,8 @@ const ErrorResponse = require("../utils/errorResponse");
 const cloudinary = require("../utils/cloudinary");
 const sendEmail = require("../utils/sendEmail");
 const VerifyUser = require("../models/verifyUser");
-
+const ForgotPassword = require("../models/forgotPasswordModel");
+const { Wit } = require("node-wit");
 //SIGN UP
 exports.signup = async (req, res, next) => {
   const { email } = req.body;
@@ -243,8 +244,6 @@ exports.searchUserByName = async (req, res, next) => {
   }
 };
 
-const ForgotPassword = require("../models/forgotPasswordModel");
-
 exports.sendForgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -275,10 +274,14 @@ exports.sendForgotPassword = async (req, res) => {
     const emailContent = `Your verification code for resetting password is: ${verificationKey}`;
     await sendEmail(email, emailSubject, emailContent);
 
-    res.status(200).send({ message: "Verification email sent successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Verification email sent successfully" });
   } catch (error) {
     console.error("Error sending verification email:", error);
-    res.status(500).send({ message: "Failed to send verification email" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send verification email" });
   }
 };
 
@@ -289,13 +292,13 @@ exports.verifyPassword = async (req, res) => {
     const forgotPwdEntry = await ForgotPassword.findOne({ email, key });
 
     if (!forgotPwdEntry) {
-      return res.status(200).send({ success: false });
+      return res.status(200).json({ success: false });
     }
 
-    res.status(200).send({ success: true });
+    res.status(200).json({ success: true });
   } catch (error) {
     console.error("Error verifying email:", error);
-    res.status(500).send({ success: false, message: "Internal Server Error" });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
@@ -326,4 +329,77 @@ exports.updatePassword = async (req, res) => {
     console.error("Error updating password:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
+};
+exports.getChatBotResponse = async (req, res) => {
+  try {
+    const { message } = req.body;
+    const response = await handleMessage(message);
+    res.status(200).json({ success: true, response });
+  } catch (error) {
+    console.error("Error getting chatbot response:", error);
+    res.status(500).json({ success: false, response: "Internal Server Error" });
+  }
+};
+
+const handleMessage = async (message) => {
+  try {
+    const client = new Wit({ accessToken: process.env.WIT_AI_TOKEN });
+    const response = await client.message(message, {});
+    console.log("response", response);
+    if (response) {
+      return handleResponse(response);
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleResponse = (response) => {
+  let name = undefined;
+  let confidence = 0;
+  Array(response).forEach((r) => {
+    if (r.intents.length > 0) {
+      name = r.intents[0].name;
+      confidence = r.intents[0].confidence;
+    }
+    console.log("Check", name, confidence);
+  });
+  switch (name) {
+    case "overview":
+      return handleOverview();
+    case "login":
+      return handleLogin();
+    case "search_restaurant":
+      return handleSearchRestaurant();
+    case "review":
+      return handleReview();
+    case "security_account":
+      return handleSecurityAccount();
+    default:
+      return handleException();
+  }
+};
+
+const handleOverview = () => {
+  return "Hello, I am a chatbot. I can help you with the following: login, search restaurant, overview, review, security account. The restaurant review application was created to help users search for restaurants, view reviews, rate restaurants, and save restaurant lists.";
+};
+
+const handleLogin = () => {
+  return "To login in the restaurant review app. You need to enter fields(email and password) if you need dont have a account. You need to sign up";
+};
+
+const handleSearchRestaurant = () => {
+  return "To search for a restaurant, you need to enter the name of the restaurant. For example, you can write 'blussy', If you want to search for a restaurant near by you, you can click icon at the top on the right side of the screen.";
+};
+
+const handleReview = () => {
+  return "To see a review of a restaurant, you click on the restaurant and you will see the reviews of the restaurant. You can also write a review of the restaurant.";
+};
+
+const handleSecurityAccount = () => {
+  return "To secure your account, you need to verify your email address. You can do this by clicking verify email in the profile section.";
+};
+
+const handleException = () => {
+  return "Please say something like login, search restaurant, overview, review, security account";
 };
