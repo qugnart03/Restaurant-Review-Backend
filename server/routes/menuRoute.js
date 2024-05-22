@@ -10,6 +10,7 @@ const {
   showDishByID,
   showMenuItem,
   getAllDishOfRestaurant,
+  getDishOfRestaurantByAdmin,
   searchDishByName,
 } = require("../controllers/menuController");
 
@@ -49,5 +50,11 @@ router.put(
   isOwnRestaurant,
   upload.single("image"),
   updateDishMenu
+);
+
+router.get(
+  "/restaurant/:id/menus",
+  isAuthenticated,
+  getDishOfRestaurantByAdmin
 );
 module.exports = router;

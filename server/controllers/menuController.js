@@ -400,3 +400,23 @@ exports.searchDishByName = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getDishOfRestaurantByAdmin = async (req, res) => {
+  const restaurantId = req.params.id;
+
+  try {
+    const menu = await Menu.findOne({ restaurant: restaurantId }).populate(
+      "restaurant",
+      "name"
+    );
+    if (!menu) {
+      return res
+        .status(404)
+        .json({ message: "Menu not found for this restaurant" });
+    }
+    res.json(menu);
+  } catch (error) {
+    console.error("Error fetching menu:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
