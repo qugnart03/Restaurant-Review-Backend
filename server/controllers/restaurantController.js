@@ -246,7 +246,7 @@ exports.toggleBookmark = async (req, res, next) => {
     }
 
     const bookmarkIndex = restaurant.bookmarks.findIndex(
-      (userId) => userId.toString() === userId.toString()
+      (id) => id.toString() === userId.toString()
     );
 
     if (bookmarkIndex === -1) {

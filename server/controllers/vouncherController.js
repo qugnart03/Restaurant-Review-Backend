@@ -60,8 +60,8 @@ exports.createVoucher = async (req, res, next) => {
         .json({ success: false, message: "Restaurant not found" });
     }
 
-    const startDateObj = moment(startDate, "YYYY-MM-DD").toDate();
-    const endDateObj = moment(endDate, "YYYY-MM-DD").toDate();
+    const startDateObj = moment.utc(startDate, "YYYY-MM-DD").toDate();
+    const endDateObj = moment.utc(endDate, "YYYY-MM-DD").toDate();
 
     const newVoucher = new Voucher({
       code: generateVoucherCode(),
@@ -176,10 +176,10 @@ exports.updateVoucherById = async (req, res, next) => {
       voucher.content = content;
     }
     if (startDate) {
-      voucher.startDate = moment(startDate, "YYYY-MM-DD").toDate();
+      voucher.startDate = moment.utc(startDate, "YYYY-MM-DD").toDate();
     }
     if (endDate) {
-      voucher.endDate = moment(endDate, "YYYY-MM-DD").toDate();
+      voucher.endDate = moment.utc(endDate, "YYYY-MM-DD").toDate();
     }
 
     await voucher.save();
