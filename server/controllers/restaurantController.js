@@ -22,7 +22,8 @@ exports.createRestaurant = async (req, res, next) => {
 
     const { name, type, country, timeWork, phone, description, address } =
       req.body;
-
+    const coordinates = await getCoordinatesFromAddress(address, AccessToken);
+    console.log(coordinates);
     const startTime = timeWork ? timeWork.split("-")[0] : undefined;
     const endTime = timeWork ? timeWork.split("-")[1] : undefined;
 
@@ -44,6 +45,7 @@ exports.createRestaurant = async (req, res, next) => {
         public_id: result.public_id,
         url: result.secure_url,
       },
+      coordinates,
       postedBy: req.user._id,
     });
 
@@ -90,6 +92,7 @@ exports.showSingleRestaurant = async (req, res, next) => {
         .status(404)
         .json({ success: false, error: "Restaurant not found" });
     }
+    console.log(restaurant);
 
     res.status(200).json({
       success: true,
@@ -131,6 +134,8 @@ exports.deleteRestaurant = async (req, res, next) => {
 //UPDATE RESTAURANT
 exports.updateRestaurant = async (req, res, next) => {
   try {
+    console.log(req.body);
+
     const {
       name,
       type,
@@ -197,7 +202,6 @@ exports.updateRestaurant = async (req, res, next) => {
     next(error);
   }
 };
-
 //ADD COMMENT
 
 exports.addComment = async (req, res, next) => {
@@ -216,7 +220,7 @@ exports.addComment = async (req, res, next) => {
     );
 
     const populatedRestaurant = await Restaurant.findById(restaurantId)
-      .populate("comments.postedBy", "name email")
+      .populate("comments.postedBy", "name email image")
       .exec();
 
     res.status(200).json({
@@ -242,7 +246,7 @@ exports.toggleBookmark = async (req, res, next) => {
     }
 
     const bookmarkIndex = restaurant.bookmarks.findIndex(
-      (userId) => userId.toString() === userId.toString()
+      (id) => id.toString() === userId.toString()
     );
 
     if (bookmarkIndex === -1) {
@@ -256,14 +260,14 @@ exports.toggleBookmark = async (req, res, next) => {
       restaurant.bookmarked = false;
 
       req.user.bookmarks = req.user.bookmarks.filter(
-        (restaurantId) => restaurantId.toString() !== restaurantId.toString()
+        (id) => id.toString() !== restaurantId.toString()
       );
       await req.user.save();
     }
 
     await restaurant.save();
 
-    res.status(200).json({ success: true, restaurant });
+    res.status(200).json({ success: true, check: restaurant.bookmarked });
   } catch (error) {
     next(error);
   }
@@ -317,6 +321,7 @@ exports.showRestaurantWithAdmin = async (req, res, next) => {
       .exec();
 
     if (!restaurant) {
+      console.log("Restaurant not found for this user");
       return res.status(404).json({
         success: false,
         message: "Restaurant not found for this user",

@@ -167,10 +167,10 @@ exports.deletePost = async (req, res, next) => {
 exports.updatePost = async (req, res, next) => {
   try {
     const { title, content, image } = req.body;
-    const currentPost = await Post.findById(req.params.id);
+    let updatedImage;
 
     //MODIFY POST IMAGE CONDITIONALLY
-    if (req.body.image !== "") {
+    if (image !== "") {
       const newImage = await cloudinary.uploader.upload(req.file.path, {
         folder: "posts",
         width: 1200,
@@ -186,42 +186,19 @@ exports.updatePost = async (req, res, next) => {
     const postUpdate = await Post.findByIdAndUpdate(
       req.params.id,
       {
-        title: title || currentPost.title,
-        content: content || currentPost.content,
+        title,
+        content,
         image: updatedImage,
       },
-      { new: true }
+      { new: true, omitUndefined: true }
     );
 
-    const user = await User.findById(postUpdate.postedBy);
+    const user = await User.findById(postUpdate.postedBy).select("-password");
 
     res.status(200).json({
-      _id: postUpdate._id,
-      title: postUpdate.title,
-      content: postUpdate.content,
-      postedBy: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        password: user.password,
-        image: user.image,
-        address: user.address,
-        phone: user.phone,
-        role: user.role,
-        bookmarks: user.bookmarks,
-        verified: user.verified,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        __v: user.__v,
-        vouchers: user.vouchers,
-      },
-      image: {
-        url: updatedImage.url,
-        public_id: updatedImage.public_id,
-      },
-      likes: postUpdate.likes,
-      createdAt: postUpdate.createdAt,
-      updatedAt: postUpdate.updatedAt,
+      ...postUpdate._doc,
+      postedBy: user,
+      image: updatedImage,
       countComment: postUpdate.comments.length,
       countLike: postUpdate.likes.length,
     });
@@ -260,7 +237,7 @@ exports.addComment = async (req, res, next) => {
     );
     const post = await Post.findById(postComment._id).populate(
       "comments.postedBy",
-      "name email"
+      "name image email"
     );
     res.status(200).json({
       success: true,
@@ -295,7 +272,7 @@ exports.toggleLike = async (req, res, next) => {
 
     await post.save();
 
-    res.status(200).json({ success: true, post });
+    res.status(200).json({ success: true, check: post.liked });
   } catch (error) {
     next(error);
   }
